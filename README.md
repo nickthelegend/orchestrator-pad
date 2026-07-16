@@ -156,7 +156,8 @@ cd cad
 ## Roadmap
 
 - [x] v1 printable enclosure, caps, knob — parametric CAD + audited fit (branch [`v1`](../../tree/v1))
-- [x] v2 logo keycaps (Grok · Codex · Claude Code · Antigravity · opencode · Kiro · Cursor), two-color legend infills, taller case for full DevKitC clearance, USB mating relief
+- [x] v2 logo keycaps (Claude Code · Antigravity · opencode · Kiro · Cursor), taller case for full DevKitC clearance, USB mating relief (branch [`v2`](../../tree/v2))
+- [x] **v3 (current)** — Grok + Codex keys (seven agents), two-color legend infills (`legends-all.stl`)
 - [ ] `firmware/` — ESP-IDF: matrix scan, encoder detents, hold-to-talk ring
       buffer, WebSocket client, USB-HID fallback
 - [ ] daemon reference handler + pairing flow

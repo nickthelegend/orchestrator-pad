@@ -1,4 +1,4 @@
-# Orchestrator Pad — dimensional spec (v0.2)
+# Orchestrator Pad — dimensional spec (v3)
 
 Open-source ESP32 macropad for orchestrating coding agents: lock a target agent
 (Grok / Codex / Claude Code / Antigravity / opencode / Kiro / Cursor),
