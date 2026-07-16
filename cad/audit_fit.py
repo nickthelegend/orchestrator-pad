@@ -28,7 +28,7 @@ def sec(t):
 # ---------------------------------------------------------------- 1. grid ----
 sec("1. key grid vs SPEC")
 spec_grid = {
-    ("preset1"): (pl.COL_X[1], pl.ROW_Y[0]), ("preset2"): (pl.COL_X[2], pl.ROW_Y[0]),
+    ("cursor"): (pl.COL_X[1], pl.ROW_Y[0]), ("preset2"): (pl.COL_X[2], pl.ROW_Y[0]),
     ("preset3"): (pl.COL_X[3], pl.ROW_Y[0]),
     ("codex"): (pl.COL_X[0], pl.ROW_Y[1]), ("claude"): (pl.COL_X[1], pl.ROW_Y[1]),
     ("antigravity"): (pl.COL_X[2], pl.ROW_Y[1]), ("opencode"): (pl.COL_X[3], pl.ROW_Y[1]),
@@ -63,9 +63,9 @@ for k in keys:
         print("  cutout NOT through both bands at", k["id"], BAD)
 web_1u = pl.PITCH - pl.MX_CUT
 print(f"webbing between adjacent cutouts: {web_1u:.2f}", OK if web_1u >= 4.0 else BAD)
-# knob hole to nearest cutout (preset1)
+# knob hole to nearest cutout (cursor key)
 d_knob_cut = pl.PITCH - pl.KNOB_HOLE_D / 2 - pl.MX_CUT / 2
-print(f"knob hole edge to preset1 cutout edge: {d_knob_cut:.2f}")
+print(f"knob hole edge to cursor cutout edge: {d_knob_cut:.2f}")
 # min web to counterbore + tower at corners (r0c3 vs screw at (39,39))
 cut = affinity.translate(pl.rounded_rect(pl.MX_CUT, pl.MX_CUT, part_plate.MX_CORNER_R),
                          pl.COL_X[3], pl.ROW_Y[0])
@@ -104,10 +104,17 @@ print("knob bottom vs plate top:", pl.KNOB_Z0 - pl.PLATE_Z1,
       OK if pl.KNOB_Z0 - pl.PLATE_Z1 > 0 else BAD)
 # effective blind bore depth (ceiling slab starts at CEIL_Z0)
 print(f"effective bore depth: {part_knob.CEIL_Z0:.1f} (spec 12.0, ceiling overlap eats 0.2)")
-# M7 nut stack on plate top vs knob bottom (nut ~1.8-2.3 + washer)
-gap = pl.KNOB_Z0 - pl.PLATE_Z1
-print(f"gap under knob for M7 nut+washer: {gap:.2f} (typ nut stack ~2.0-2.5) "
-      f"{'WARN nut collides / knob rides high' if gap < 2.0 else OK}")
+# M7 panel nut (~11.5 across corners x 2.2) sits on the plate, swallowed by
+# the knob's bottom-face nut recess (Ø12.6 x 2.4; free depth 2.2 under the
+# D-band per the kernel overlap)
+NUT_AF, NUT_H = 11.5, 2.2
+free = part_knob.NUT_DEPTH - 0.2
+nut_top = pl.PLATE_Z1 + NUT_H
+recess_ceiling = pl.KNOB_Z0 + free
+print(f"nut recess Ø{part_knob.NUT_D} x {free:.1f} free vs nut Ø{NUT_AF} x {NUT_H}: "
+      f"radial {(part_knob.NUT_D - NUT_AF) / 2:.2f}, nut top Z{nut_top:.1f} vs "
+      f"recess ceiling Z{recess_ceiling:.1f} "
+      f"{OK if part_knob.NUT_D >= NUT_AF + 0.8 and recess_ceiling >= nut_top else BAD}")
 
 # --------------------------------------------------- 5. skirt vs tray fit ----
 sec("5. plate skirt vs tray (recompute)")
@@ -121,8 +128,10 @@ tray_in_thin = pl.rounded_rect(pl.CASE_W - 2 * part_tray.SKIRT_WALL,
 pts = [skirt_out.exterior.interpolate(t, normalized=True) for t in
        [i / 720 for i in range(720)]]
 min_gap = min(tray_in_thin.exterior.distance(p) for p in pts)
+flats = (pl.CASE_W - 2 * part_tray.SKIRT_WALL - part_plate.SKIRT_OUT_W) / 2
 print(f"skirt outer vs tray upper-inner: min gap {min_gap:.3f} per side "
-      f"(SPEC text claims ~0.15; numbers give {(87.6 - 86.5) / 2:.3f} on the flats)")
+      f"(SPEC ~0.15; flats give {flats:.3f}) "
+      f"{OK if 0.10 <= min_gap <= 0.25 else BAD}")
 # skirt vs corner bosses: XY overlap x Z overlap (need area 0, gap >= 0.3)
 boss_zone = unary_union([affinity.translate(pl.circle(part_tray.BOSS_D), sx * 39, sy * 39)
                          for sx in (-1, 1) for sy in (-1, 1)])
@@ -143,6 +152,16 @@ usb_corr = box(part_tray.USB_X - part_tray.USB_W / 2, 40.0,
 blocked = skirt.intersection(usb_corr).area
 print(f"skirt material inside USB plug corridor: {blocked:.2f} mm^2 "
       f"{OK if blocked < 0.01 else BAD + ' USB BLOCKED'}")
+# ...nor over the UART shell / relief pocket (back notch x -13.3..+14.79)
+uart_corr = box(part_tray.UART_X0, 40.0, part_tray.UART_X1, 46.0)
+blocked_u = skirt.intersection(uart_corr).area
+print(f"skirt material inside UART shell/pocket corridor: {blocked_u:.2f} mm^2 "
+      f"{OK if blocked_u < 0.01 else BAD + ' UART BLOCKED'}")
+# ...and the front-center notch must clear the INMP441 breakout zone
+mic_zone = box(-7.0, -44.0, 7.0, -42.0)
+blocked_m = skirt.intersection(mic_zone).area
+print(f"skirt material inside mic-breakout zone: {blocked_m:.2f} mm^2 "
+      f"{OK if blocked_m < 0.01 else BAD + ' MIC BLOCKED'}")
 # towers vs tray wall
 tower = affinity.translate(pl.circle(part_plate.TOWER_D), 39, 39)
 print(f"tower vs tray thin-wall inner: gap {tray_in_thin.exterior.distance(tower):.3f} "
@@ -150,7 +169,7 @@ print(f"tower vs tray thin-wall inner: gap {tray_in_thin.exterior.distance(tower
 
 # --------------------------------------------------------- 6. screw stack ----
 SCREW_L = 8.0            # BOM: M3x8 button head (an M3x10 tip would land at
-                         # Z4.7, 0.8 BELOW the boss bore floor -> bottoms out)
+                         # Z8.2, 0.8 BELOW the boss bore floor -> bottoms out)
 sec(f"6. screw stack (M3x{SCREW_L:.0f} button head)")
 head_z = pl.PLATE_Z1 - part_plate.CBORE_DEPTH          # head bearing face
 bore_floor = part_tray.BOSS_SOLID_TOP                  # boss bore floor

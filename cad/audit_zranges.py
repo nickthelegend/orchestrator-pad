@@ -16,6 +16,6 @@ print("PLATE shells:")
 for z0, z1, (xa, xb, ya, yb), nt in shells_of(plate):
     print(f"  z {z0:.2f}..{z1:.2f}  x {xa:.2f}..{xb:.2f}  y {ya:.2f}..{yb:.2f}  tris={nt}")
 
-# skirt = the shell spanning z 7.5..14.2 with ~86.5 bbox
+# skirt = the shells spanning z 11.0..17.7 with ~87.3 bbox
 V, F = plate._np()
 print("\nplate vertex z-range:", V[:, 2].min(), V[:, 2].max())

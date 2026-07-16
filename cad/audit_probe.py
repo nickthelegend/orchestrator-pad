@@ -121,7 +121,7 @@ tray_thin_inner = pl.rounded_rect(pl.CASE_W - 2 * pt.SKIRT_WALL,
 tray_thick_inner = pl.rounded_rect(pl.CASE_W - 2 * pl.WALL, pl.CASE_W - 2 * pl.WALL,
                                    pl.CASE_R - pl.WALL)
 
-print("-- skirt (z 7.5..14.2) vs tray corner bosses (z 5.3..11.5): Z overlap 7.5..11.5")
+print("-- skirt (z 11.0..17.7) vs tray corner bosses (z 8.8..15.0): Z overlap 11.0..15.0")
 for sx in (1, -1):
     for sy in (1, -1):
         boss = affinity.translate(pl.circle(pt.BOSS_D), sx * pl.BOSS_XY, sy * pl.BOSS_XY)
@@ -138,14 +138,18 @@ print(f"   diagonal: boss reach from skirt corner-arc center = {d_center + 3.5:.
       f"vs skirt inner R {pp.SKIRT_IN_R} / outer R {pp.SKIRT_OUT_R} "
       f"-> radial penetration past inner face = {d_center + 3.5 - pp.SKIRT_IN_R:.3f} mm")
 
-print("-- skirt vs USB-C slot zone (slot x +-5.25, z 6.4..10.9; skirt z 7.5..14.2)")
-usb_zone = box(-pt.USB_W / 2, 40.0, pt.USB_W / 2, 45.0)
-blocked = skirt.intersection(usb_zone)
-print(f"   skirt material inside slot x-range at back wall: area={blocked.area:.2f} mm^2 "
-      f"(y-extent {blocked.bounds[1]:.2f}..{blocked.bounds[3]:.2f}) "
-      f"-> solid wall behind slot for z 7.5..10.9: {'YES - BLOCKS USB' if blocked.area > 1 else 'no'}")
+print("-- skirt vs USB/UART corridors (slots z 6.4..10.9; skirt z 11.0..17.7)")
+usb_zone = box(pt.USB_X - pt.USB_W / 2, 40.0, pt.USB_X + pt.USB_W / 2, 45.0)
+uart_zone = box(pt.UART_X0, 40.0, pt.UART_X1, 45.0)
+corr = usb_zone.union(uart_zone)
+raw = skirt.intersection(corr).area
+actual = pp._skirt_profile().intersection(corr).area
+print(f"   un-notched ring inside the port corridors: {raw:.2f} mm^2 (why the "
+      f"back notch x {pp.USB_NOTCH_X0}..{pp.USB_NOTCH_X1} is mandatory)")
+print(f"   actual notched skirt inside the corridors: {actual:.2f} mm^2 "
+      f"-> {'YES - BLOCKS PORTS' if actual > 0.01 else 'clear'}")
 
-print("-- plate screw tower vs tray thin wall inner face (both exist z 11.5..14.0)")
+print("-- plate screw tower vs tray thin wall inner face (both exist z 15.0..17.7)")
 tower = affinity.translate(pl.circle(pp.TOWER_D), 39, 39)
 print(f"   min gap tower->tray thin inner boundary = "
       f"{tower.exterior.distance(tray_thin_inner.exterior):.3f} mm "
@@ -158,8 +162,7 @@ print("-- skirt bottom seat on tray ledge: contact width")
 ledge = pl.ring2d(tray_thin_inner, tray_thick_inner)   # annulus 42.6..43.8
 seat = skirt.intersection(ledge)
 print(f"   skirt/ledge overlap area={seat.area:.1f} mm^2 of skirt {skirt.area:.1f} mm^2; "
-      f"straight-side contact width = {43.8 - 43.25:.2f}... "
-      f"skirt band 42.1..43.25 vs ledge 42.6..43.8 -> {43.25 - 42.6:.2f} mm wide ring contact")
+      f"skirt band 42.5..43.65 vs ledge 42.6..43.8 -> {43.65 - 42.6:.2f} mm wide ring contact")
 
 print("-- cap side wall thickness over z (1u and 2u)")
 for units in (1, 2):
@@ -222,19 +225,22 @@ for nm, d in [("bandA(3.4)", pp.SCREW_D), ("bandB(6.4)", pp.CBORE_D)]:
     after = len(pl._polys(prof.buffer(-0.4)))
     print(f"   {nm}: pieces {before} -> {after} after -0.4 (lost => <0.8 feature)")
 
-print("-- tray band profiles erosion -0.4")
+print("-- tray band profiles erosion -0.4 (outer + liner wall columns)")
 outer = pl.rounded_rect(pl.CASE_W, pl.CASE_W, pl.CASE_R)
-ring_thick = pl.ring2d(outer, tray_thick_inner)
 ring_thin = pl.ring2d(outer, tray_thin_inner)
-usb = box(-pt.USB_W / 2, pt.CUT_IN, pt.USB_W / 2, pt.CUT_OUT)
+ring_liner = pl.ring2d(
+    pl.rounded_rect(pl.CASE_W - 2 * pt.SKIRT_WALL + 2 * pt.OVL,
+                    pl.CASE_W - 2 * pt.SKIRT_WALL + 2 * pt.OVL,
+                    pl.CASE_R - pt.SKIRT_WALL + pt.OVL), tray_thick_inner)
+usb = box(pt.USB_X - pt.USB_W / 2, pt.CUT_IN, pt.USB_X + pt.USB_W / 2, pt.CUT_OUT)
+uart = box(pt.UART_X0, pt.CUT_IN, pt.UART_X1, pt.UART_SKIN_Y)
+back = usb.union(uart)
 mics = unary_union([box(x - pt.MIC_W / 2, -pt.CUT_OUT, x + pt.MIC_W / 2, -pt.CUT_IN)
                     for x in pt.MIC_XS])
-reset = box(pt.CUT_IN, pt.RESET_Y - pt.RESET_W / 2, pt.CUT_OUT, pt.RESET_Y + pt.RESET_W / 2)
-ports = mics.union(reset)
-for nm, prof in [("thick-usb", ring_thick.difference(usb)),
-                 ("thick-usb-ports", ring_thick.difference(usb).difference(ports)),
-                 ("thin-usb-ports", ring_thin.difference(usb).difference(ports)),
-                 ("thin-usb", ring_thin.difference(usb))]:
+for nm, prof in [("thin-back", ring_thin.difference(back)),
+                 ("thin-back-mics", ring_thin.difference(back).difference(mics)),
+                 ("liner-back", ring_liner.difference(back)),
+                 ("liner-back-mics", ring_liner.difference(back).difference(mics))]:
     b = len(pl._polys(prof))
     a = len(pl._polys(prof.buffer(-0.4)))
     print(f"   {nm}: pieces {b} -> {a} after -0.4")

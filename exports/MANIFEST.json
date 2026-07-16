@@ -1,69 +1,69 @@
 {
-  "generated": "2026-07-16T06:38:01+00:00",
+  "generated": "2026-07-16T08:22:55+00:00",
   "files": [
     {
       "path": "exports/orchestrator-pad-assembled.glb",
-      "bytes": 3121108,
-      "triangles": 36996,
+      "bytes": 3333800,
+      "triangles": 39528,
       "watertight": true
     },
     {
       "path": "exports/orchestrator-pad-exploded.glb",
-      "bytes": 3121112,
-      "triangles": 36996,
+      "bytes": 3333800,
+      "triangles": 39528,
       "watertight": true
     },
     {
       "path": "exports/tray.stl",
-      "bytes": 337284,
-      "triangles": 6744,
+      "bytes": 394884,
+      "triangles": 7896,
       "watertight": true
     },
     {
       "path": "exports/plate.stl",
-      "bytes": 515884,
-      "triangles": 10316,
+      "bytes": 521284,
+      "triangles": 10424,
       "watertight": true
     },
     {
       "path": "exports/caps-all.stl",
-      "bytes": 844284,
-      "triangles": 16884,
+      "bytes": 847084,
+      "triangles": 16940,
       "watertight": true
     },
     {
       "path": "exports/knob.stl",
-      "bytes": 152684,
-      "triangles": 3052,
+      "bytes": 213484,
+      "triangles": 4268,
       "watertight": true
     }
   ],
   "totals": {
     "files": 6,
-    "bytes": 8092356,
-    "triangles": 110988,
+    "bytes": 8644336,
+    "triangles": 118584,
     "watertight": true
   },
   "items": [
     {
       "name": "tray",
-      "triangles": 6744,
-      "shells": 28,
-      "volume_mm3": 30504.82,
+      "triangles": 7896,
+      "shells": 33,
+      "volume_mm3": 34459.31,
       "watertight": true
     },
     {
       "name": "plate",
-      "triangles": 10316,
-      "shells": 11,
-      "volume_mm3": 11275.07,
+      "triangles": 10424,
+      "shells": 12,
+      "volume_mm3": 11073.17,
       "watertight": true
     },
     {
-      "name": "preset1",
-      "triangles": 1020,
-      "shells": 3,
-      "volume_mm3": 1052.98,
+      "name": "cursor",
+      "triangles": 908,
+      "shells": 4,
+      "volume_mm3": 1028.11,
       "watertight": true
     },
     {
@@ -89,30 +89,30 @@
     },
     {
       "name": "claude",
-      "triangles": 1388,
-      "shells": 3,
-      "volume_mm3": 1029.63,
+      "triangles": 932,
+      "shells": 5,
+      "volume_mm3": 1004.15,
       "watertight": true
     },
     {
       "name": "antigravity",
-      "triangles": 1088,
-      "shells": 4,
-      "volume_mm3": 1027.73,
+      "triangles": 1656,
+      "shells": 3,
+      "volume_mm3": 1010.86,
       "watertight": true
     },
     {
       "name": "opencode",
-      "triangles": 1680,
+      "triangles": 856,
       "shells": 4,
-      "volume_mm3": 1023.51,
+      "volume_mm3": 1026.27,
       "watertight": true
     },
     {
       "name": "kiro",
-      "triangles": 1068,
-      "shells": 3,
-      "volume_mm3": 1024.45,
+      "triangles": 1948,
+      "shells": 5,
+      "volume_mm3": 1026.03,
       "watertight": true
     },
     {
@@ -159,9 +159,9 @@
     },
     {
       "name": "knob",
-      "triangles": 3052,
-      "shells": 4,
-      "volume_mm3": 3097.16,
+      "triangles": 4268,
+      "shells": 5,
+      "volume_mm3": 2893.92,
       "watertight": true
     }
   ],
@@ -173,12 +173,12 @@
     },
     "keys": [
       {
-        "id": "preset1",
-        "glyph": "dot",
+        "id": "cursor",
+        "glyph": "cursor",
         "units": 1,
         "x": -9.525,
         "y": 28.575000000000003,
-        "color": "#D8DCE2"
+        "color": "#26282E"
       },
       {
         "id": "preset2",
@@ -206,7 +206,7 @@
       },
       {
         "id": "claude",
-        "glyph": "C",
+        "glyph": "claude",
         "units": 1,
         "x": -9.525,
         "y": 9.525,
@@ -214,7 +214,7 @@
       },
       {
         "id": "antigravity",
-        "glyph": "A",
+        "glyph": "antigravity",
         "units": 1,
         "x": 9.525,
         "y": 9.525,
@@ -222,15 +222,15 @@
       },
       {
         "id": "opencode",
-        "glyph": "O",
+        "glyph": "opencode",
         "units": 1,
         "x": 28.575000000000003,
         "y": 9.525,
-        "color": "#19B36B"
+        "color": "#FAFAF8"
       },
       {
         "id": "kiro",
-        "glyph": "K",
+        "glyph": "kiro",
         "units": 1,
         "x": -28.575000000000003,
         "y": -9.525,

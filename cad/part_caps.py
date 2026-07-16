@@ -69,7 +69,8 @@ def _cap(key):
     """One finished keycap (local Z0 at the bottom) moved to world position."""
     ob, ot, ib = (pl.rounded_rect(*dims) for dims in SIZES[key["units"]])
     m = _hollow_body(ob, ot, ib)
-    m += pl.prism(ot.difference(pl.glyph(key["glyph"], GLYPH_SIZE)),
+    gsize = pl.GLYPH_SIZES.get(key["glyph"], GLYPH_SIZE)
+    m += pl.prism(ot.difference(pl.glyph(key["glyph"], gsize)),
                   CROWN_Z0, CAP_H)                                # glyph crown
     m += _stem()
     return m.translate(key["x"], key["y"], pl.CAP_Z0)
@@ -90,7 +91,8 @@ if __name__ == "__main__":
         print(f"{name:12s} shells={rep['shells']:2d} tris={rep['triangles']:5d} "
               f"vol={rep.get('volume_mm3', float('nan')):9.2f} "
               f"watertight={rep['watertight']} {rep['problems'][:2]}")
-    exports = os.path.join(os.path.dirname(os.path.abspath(__file__)), "exports")
+    here = os.path.dirname(os.path.abspath(__file__))
+    exports = os.path.normpath(os.path.join(here, "..", "exports"))
     os.makedirs(exports, exist_ok=True)
     out = os.path.join(exports, "preview-caps.glb")
     pl.glb_write(out, items)

@@ -1,9 +1,11 @@
 """part_knob.py — effort dial knob for the Orchestrator Pad (EC11 encoder).
 
-Knurled Ø17 x 15 cylinder: 24 scallop flutes on the rim, blind EC11 D-shaft
-bore (Ø6.1, flat at 4.6), 1.5-ish chamfer crown lofting to Ø16, and a
-debossed tick dot near the rim. Four overlapping watertight shells merged
-into one Mesh (the slicer unions them); world position per SPEC/partlib.
+Knurled Ø17 x 15 cylinder: 24 scallop flutes on the rim, an Ø12.6 x 2.4 nut
+recess in the bottom face (swallows the EC11 M7 panel nut sitting on the
+plate), blind EC11 D-shaft bore (Ø6.1, flat at 4.6) above it, 1.5-ish
+chamfer crown lofting to Ø16, and a debossed tick dot near the rim. Five
+overlapping watertight shells merged into one Mesh (the slicer unions
+them); world position per SPEC/partlib.
 
 Local frame: z0 = knob bottom; translated to (KNOB_POS, KNOB_Z0) in build().
 """
@@ -28,7 +30,12 @@ FLUTE_D = 1.6                    # scallop cutter diameter
 FLUTE_R = 8.9                    # scallop center radius
 
 BORE_D, BORE_FLAT = 6.1, 4.6     # EC11 D-shaft bore profile
-BORE_Z1 = 12.0                   # blind bore wall section: 0 -> 12
+NUT_D = 12.6                     # M7 panel-nut recess (nut ~Ø11.5 corners,
+NUT_DEPTH = 2.4                  # ~2.2 tall): counterbore band 0 -> 2.4,
+#                                  concentric with the D-bore above it; the
+#                                  D-band starts at 2.2 (0.2 kernel overlap),
+#                                  so the free recess depth under it is 2.2.
+BORE_Z1 = 12.0                   # blind bore wall section: 2.2 -> 12
 CEIL_Z0, CEIL_Z1 = 11.8, 13.7    # bore ceiling + upper body (0.2 overlap down)
 CROWN_Z0, CROWN_Z1 = 13.5, 14.7  # chamfer loft fluted -> Ø16 (0.2 overlap down)
 TOP_D = 16.0                     # crown top / tick layer diameter
@@ -51,8 +58,13 @@ def build():
     fluted = fluted_profile()
     m = pl.Mesh()
 
-    # 1. knurled body with blind D-shaft bore walls (through this section)
-    m += pl.prism(pl.ring2d(fluted, pl.d_shaft(BORE_D, BORE_FLAT)), 0.0, BORE_Z1)
+    # 1a. nut-recess band: Ø12.6 counterbore in the bottom face (0..2.4)
+    m += pl.prism(pl.ring2d(fluted, pl.circle(NUT_D)), 0.0, NUT_DEPTH)
+
+    # 1b. knurled body with blind D-shaft bore walls; starts 0.2 below the
+    #     recess top so the bands fuse (its bottom cap spans Ø12.6 -> D)
+    m += pl.prism(pl.ring2d(fluted, pl.d_shaft(BORE_D, BORE_FLAT)),
+                  NUT_DEPTH - 0.2, BORE_Z1)
 
     # 2. bore ceiling + upper body (drops 0.2 into the bore section to fuse)
     m += pl.prism(fluted, CEIL_Z0, CEIL_Z1)

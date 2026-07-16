@@ -38,22 +38,22 @@ ROW_Y = [1.5 * PITCH, 0.5 * PITCH, -0.5 * PITCH, -1.5 * PITCH]
 
 CASE_W = 90.0
 CASE_R = 8.0
-TRAY_H = 14.0
+TRAY_H = 17.5
 WALL = 2.4
 FLOOR = 2.4
-LEDGE_Z = 7.5          # above this the tray wall thins to 1.2 (skirt seat)
+LEDGE_Z = 11.0         # above this the tray wall thins to 1.2 (skirt seat)
 BOSS_XY = 39.0         # corner boss / screw centers at (+-39, +-39)
-PLATE_Z0, PLATE_Z1 = 14.0, 15.5
+PLATE_Z0, PLATE_Z1 = 17.5, 19.0
 MX_CUT = 14.1
 KNOB_HOLE_D = 7.4
-CAP_Z0 = 21.0          # assembled: keycap bottom face height
-KNOB_Z0 = 16.5
+CAP_Z0 = 24.5          # assembled: keycap bottom face height
+KNOB_Z0 = 20.0
 
 COLORS = {
     "tray": "#AEB4BC", "plate": "#F4F5F7", "knob": "#E8E9EB",
     "preset": "#D8DCE2", "codex": "#1A1A1A", "claude": "#D97757",
-    "antigravity": "#2D6BFF", "opencode": "#19B36B", "kiro": "#7A3FF2",
-    "util": "#FFFFFF", "voice": "#FFFFFF",
+    "antigravity": "#2D6BFF", "opencode": "#FAFAF8", "kiro": "#7A3FF2",
+    "cursor": "#26282E", "util": "#FFFFFF", "voice": "#FFFFFF",
 }
 
 
@@ -62,14 +62,14 @@ def key_layout():
     K = lambda i, g, c, r, u, col: dict(
         id=i, glyph=g, x=COL_X[c] if u == 1 else 0.0, y=ROW_Y[r], units=u, color=col)
     return [
-        K("preset1", "dot",    1, 0, 1, COLORS["preset"]),
+        K("cursor",  "cursor", 1, 0, 1, COLORS["cursor"]),
         K("preset2", "ring",   2, 0, 1, COLORS["preset"]),
         K("preset3", "target", 3, 0, 1, COLORS["preset"]),
         K("codex",   "X",      0, 1, 1, COLORS["codex"]),
-        K("claude",  "C",      1, 1, 1, COLORS["claude"]),
-        K("antigravity", "A",  2, 1, 1, COLORS["antigravity"]),
-        K("opencode", "O",     3, 1, 1, COLORS["opencode"]),
-        K("kiro",    "K",      0, 2, 1, COLORS["kiro"]),
+        K("claude",  "claude", 1, 1, 1, COLORS["claude"]),
+        K("antigravity", "antigravity", 2, 1, 1, COLORS["antigravity"]),
+        K("opencode", "opencode", 3, 1, 1, COLORS["opencode"]),
+        K("kiro",    "kiro",   0, 2, 1, COLORS["kiro"]),
         K("run",     "bolt",   1, 2, 1, COLORS["util"]),
         K("approve", "check",  2, 2, 1, COLORS["util"]),
         K("reject",  "cross",  3, 2, 1, COLORS["util"]),
@@ -138,6 +138,63 @@ def _arc(cx, cy, r, a0, a1, n=40):
     return list(np.column_stack([cx + r * np.cos(t), cy + r * np.sin(t)]))
 
 
+def _smooth(g, r):
+    return g.buffer(r, quad_segs=8).buffer(-r, quad_segs=8)
+
+
+# Logo silhouettes (v2 caps). Deboss semantics: the geometry is cut into the
+# cap top; interior holes (eyes, cube facet, frame window) stay RAISED and
+# read as the logo's negative space. Simplified geometric homages — the
+# original marks belong to their respective projects.
+
+def _logo_claude():
+    """Claude Code pixel-pal: blocky body, ear tabs, square eyes, leg slots."""
+    body = unary_union([
+        box(-3.5, -3.9, 3.5, 3.7),
+        box(-4.65, 0.4, -3.5, 2.2),
+        box(3.5, 0.4, 4.65, 2.2),
+    ])
+    for hole in (box(-2.5, 1.1, -1.35, 2.3), box(1.35, 1.1, 2.5, 2.3),
+                 box(-2.35, -4.2, -1.35, -2.0), box(1.35, -4.2, 2.35, -2.0)):
+        body = body.difference(hole)
+    return body
+
+
+def _logo_antigravity():
+    """Antigravity arch: gaussian bell stroked with round feet."""
+    xs = np.linspace(-4.15, 4.15, 61)
+    ys = -3.15 + 6.9 * np.exp(-((xs / 2.15) ** 2))
+    return LineString(np.column_stack([xs, ys])).buffer(1.28, quad_segs=10)
+
+
+def _logo_opencode():
+    """opencode terminal frame: heavy block with an offset window (raised)."""
+    return box(-3.0, -4.0, 3.0, 4.0).difference(box(-1.25, -1.55, 1.85, 2.2))
+
+
+def _logo_kiro():
+    """Kiro ghost: dome, scalloped feet, two round eyes (raised)."""
+    body = unary_union([
+        Point(0, 0.9).buffer(2.95, quad_segs=16),
+        box(-2.95, -3.1, 2.95, 0.9),
+        Point(-2.4, -3.1).buffer(0.9, quad_segs=10),
+    ])
+    body = body.difference(Point(-0.65, -3.35).buffer(1.05, quad_segs=10))
+    body = body.difference(Point(1.85, -3.35).buffer(1.05, quad_segs=10))
+    body = _smooth(body, 0.35)
+    body = body.difference(Point(-0.85, 1.15).buffer(0.62, quad_segs=10))
+    body = body.difference(Point(1.05, 1.15).buffer(0.62, quad_segs=10))
+    return body
+
+
+def _logo_cursor():
+    """Cursor cube: pointy-top hexagon with a folded facet (raised wedge)."""
+    hexpts = [(4.05 * math.cos(math.radians(a)), 4.05 * math.sin(math.radians(a)))
+              for a in range(90, 451, 60)]
+    hexagon = _smooth(Polygon(hexpts), 0.35)
+    return hexagon.difference(Polygon([(-1.15, 0.55), (3.42, 1.62), (0.12, -3.88)]))
+
+
 def glyph(name, size=10.0):
     """Deboss glyph as shapely geometry in a size x size box centered at 0."""
     g = {
@@ -166,8 +223,21 @@ def glyph(name, size=10.0):
         "ring": lambda: _stroke(_arc(0, 0, 3.2, 0, 360, 60), 1.7),
         "target": lambda: _stroke(_arc(0, 0, 3.7, 0, 360, 60), 1.3)
                           .union(Point(0, 0).buffer(1.5, quad_segs=12)),
+        "claude": _logo_claude,
+        "antigravity": _logo_antigravity,
+        "opencode": _logo_opencode,
+        "kiro": _logo_kiro,
+        "cursor": _logo_cursor,
     }[name]()
     return affinity.scale(g, size / 10.0, size / 10.0, origin=(0, 0))
+
+
+# Per-glyph deboss sizes (design box units on the cap top); logos run larger
+# than the letter/symbol set. part_caps falls back to its default otherwise.
+GLYPH_SIZES = {
+    "claude": 10.6, "antigravity": 10.4, "opencode": 9.8,
+    "kiro": 10.2, "cursor": 10.2,
+}
 
 # ----------------------------------------------------------------- mesh ----
 

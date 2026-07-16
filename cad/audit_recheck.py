@@ -7,16 +7,16 @@
    plate band-A material (the 0.2 Z-lap only fuses if XY overlaps too).
 3. skirt fragment inventory (sliver widths after the boss/USB notches).
 4. real-component stack: MX switch under-plate envelope vs the DevKitC-1
-   raised on the new support pads (board top Z 7.0):
+   raised on the support pads (board top Z 7.0):
      Cherry MX (datasheet): plate-top->housing-base 5.0 (=3.5 below plate
      underside); pins/post extend 3.3 below the base (=8.3 below plate top).
-     -> housing bottoms Z 10.5, pin tips Z 7.2 (plate underside 14.0).
+     -> housing bottoms Z 14.0, pin tips Z 10.7 (plate underside 17.5).
      ESP32-S3-WROOM-1 module: 18.0 x 25.5 x 3.1 tall; shield can on-board.
      DevKitC-1: PCB 25.4 x 62.87 x 1.6; USB shells 8.94w x 3.26h overhang the
      back edge ~1.31; ports +-7.79 off center.
-5. board Y seating: UART connector vs solid back wall; free Y travel; USB
-   plug recess arithmetic.
-6. reset pinhole + mic flush-mount vs skirt; knob/EC11 stack.
+5. board Y seating: UART connector vs the back-wall relief pocket; forward
+   Y-stop rib; USB plug recess arithmetic.
+6. mic flush-mount vs skirt; knob/EC11 stack.
 """
 from __future__ import annotations
 
@@ -105,11 +105,11 @@ plate_mesh = pp.build()[0][1]
 
 sec("0. raycast sanity")
 probe = np.array([
-    (0.0, 0.0, 1.2),        # tray floor          -> True
+    (0.0, 0.0, 1.2),        # tray floor           -> True
     (39.0, 39.0, 4.0),      # boss pedestal        -> True
     (0.0, 44.4, 12.0),      # thin wall band       -> True
-    (0.0, 0.0, 20.0),       # air                  -> False
-    (42.7, 0.013, 10.0),    # skirt band (plate)   -> plate True / tray False
+    (0.0, 0.0, 20.0),       # air over the web     -> False
+    (43.0, 0.013, 12.5),    # skirt band (plate)   -> plate True / tray False
 ])
 t_in = winding_inside(tray_mesh, probe)
 p_in = winding_inside(plate_mesh, probe)
@@ -119,7 +119,7 @@ print("plate:", p_in.tolist(), OK if p_in.tolist() == [False, False, False, Fals
 sec("1. mesh interference: plate skirt/tower domains vs ACTUAL tray mesh")
 skirt = pp._skirt_profile()
 sk_xy = grid_in(skirt, 0.30)
-zs = [7.65, 8.5, 10.0, 11.2, 11.8, 13.2, 13.85]
+zs = [11.15, 12.0, 13.3, 14.6, 15.9, 17.1, 17.6]
 pts = np.array([(x, y, z) for x, y in sk_xy for z in zs])
 hit = winding_inside(tray_mesh, pts)
 print(f"skirt samples: {len(pts)}  inside-tray: {int(hit.sum())} "
@@ -133,20 +133,20 @@ for cx0, cy0 in pp._screw_centers():
     for r in np.arange(1.85, 3.75, 0.3):
         for a in np.arange(0, 2 * np.pi, np.pi / 18):
             tow.append((cx0 + r * np.cos(a) + 0.013, cy0 + r * np.sin(a) + 0.013))
-pts_t = np.array([(x, y, z) for x, y in tow for z in (11.65, 12.5, 13.8)])
+pts_t = np.array([(x, y, z) for x, y in tow for z in (15.15, 16.4, 17.6)])
 hit_t = winding_inside(tray_mesh, pts_t)
 print(f"tower samples: {len(pts_t)}  inside-tray: {int(hit_t.sum())} "
       f"{OK if hit_t.sum() == 0 else BAD}")
 
-# reverse: tray boss ring under plate towers (should stop below 11.5)
+# reverse: tray boss ring under plate towers (should stop below 15.0)
 boss_pts = []
 for cx0, cy0 in pp._screw_centers():
     for r in np.arange(2.2, 3.4, 0.4):
         for a in np.arange(0, 2 * np.pi, np.pi / 12):
             boss_pts.append((cx0 + r * np.cos(a) + 0.013, cy0 + r * np.sin(a) + 0.013))
-pts_b = np.array([(x, y, z) for x, y in boss_pts for z in (10.6, 11.35)])
+pts_b = np.array([(x, y, z) for x, y in boss_pts for z in (14.1, 14.85)])
 hit_b = winding_inside(plate_mesh, pts_b)
-print(f"boss-ring samples below 11.5: {len(pts_b)}  inside-plate: {int(hit_b.sum())} "
+print(f"boss-ring samples below 15.0: {len(pts_b)}  inside-plate: {int(hit_b.sum())} "
       f"{OK if hit_b.sum() == 0 else BAD}")
 
 sec("2. fusion coverage (XY): skirt segments & tower rings under plate band A")
@@ -177,9 +177,9 @@ for i, f in enumerate(frags):
           f"y {b[1]:6.2f}..{b[3]:6.2f}  min-width<= {w:.2f}")
 
 sec("4. MX switch under-plate envelope vs DevKitC on pads (REAL components)")
-PLATE_BOT = pl.PLATE_Z0                      # 14.0
-HOUS_BOT = pl.PLATE_Z1 - 5.0                 # 10.5  (Cherry MX: plate top -> base 5.0)
-PIN_TIP = pl.PLATE_Z1 - 8.3                  # 7.2   (pins/post 3.3 below base)
+PLATE_BOT = pl.PLATE_Z0                      # 17.5
+HOUS_BOT = pl.PLATE_Z1 - 5.0                 # 14.0  (Cherry MX: plate top -> base 5.0)
+PIN_TIP = pl.PLATE_Z1 - 8.3                  # 10.7  (pins/post 3.3 below base)
 BRD_W, BRD_L, BRD_T = 25.4, 62.87, 1.6
 BRD_BOT = pt.PAD_TOP                         # 5.4 on the new pads
 BRD_TOP = BRD_BOT + BRD_T                    # 7.0
@@ -217,48 +217,46 @@ for k in pl.key_layout():
                 bad_rots.append(deg)
                 break
     if ob > 0 or oc1 > 0 or oc2 > 0:
-        flag = BAD + " pins hit can" if bad_rots and (oc1 > 0 or oc2 > 0) else \
-               ("clash-can(hous)" if (oc1 > 0 or oc2 > 0) and HOUS_BOT < CAN_TOP else "over board")
+        # XY overlap only collides if the parts also meet in Z
+        pin_clash = bad_rots and (oc1 > 0 or oc2 > 0) and PIN_TIP < CAN_TOP
+        hous_clash = (oc1 > 0 or oc2 > 0) and HOUS_BOT < CAN_TOP
+        flag = BAD + " pins hit can" if pin_clash else \
+               (BAD + " hous hits can" if hous_clash else
+                (f"clear (pins Z {PIN_TIP:.1f} > can {CAN_TOP:.1f})"
+                 if (oc1 > 0 or oc2 > 0) else "over board"))
         print(f"  {k['id']:10s} {ob:10.1f} {oc1:7.1f}/{oc2:7.1f}  {bad_rots} {flag}")
 
 sec("5. board Y seating / USB reach (REAL connector geometry)")
-print(f"back wall: outer 45.0, inner {WALL_IN_THICK} (z<7.5) / 43.8 (z>=7.5)")
-print(f"UART connector shell x -12.26..-3.32, overhang {CONN_OVH}; "
-      f"slot only at x {pt.USB_X - pt.USB_W / 2:.2f}..{pt.USB_X + pt.USB_W / 2:.2f}")
-print(f"-> UART nose hits SOLID thick wall at 42.6 (its z 7.0..7.5 band) => "
-      f"board stops {CONN_OVH} mm short of the wall")
-board_back_real = WALL_IN_THICK - CONN_OVH
-native_nose = board_back_real + CONN_OVH     # = 42.6
+print(f"back wall: outer 45.0, inner {WALL_IN_THICK} (z<{pl.LEDGE_Z}) / 43.8 above")
+print(f"UART connector shell x -12.26..-3.32, overhang {CONN_OVH}; relief "
+      f"pocket x {pt.UART_X0}..{pt.UART_X1}, z {pt.USB_Z0}..{pt.USB_Z1}, "
+      f"floor y={pt.UART_SKIN_Y} (0.9 outer skin)")
+board_back_real = WALL_IN_THICK              # UART relieved: edge on wall face
+native_nose = board_back_real + CONN_OVH     # 43.91 (0.19 short of pocket floor)
 recess = 45.0 - native_nose
-print(f"board back edge max {board_back_real:.2f}; native nose Z... y {native_nose:.2f}; "
+print(f"board back edge max {board_back_real:.2f}; native nose y {native_nose:.2f}; "
       f"USB-C plug recess behind outer face: {recess:.2f} mm "
-      f"({BAD + ' unmatable (max usable ~1.0-1.5)' if recess > 1.6 else 'marginal'})")
-# what if UART had its own relief: board on wall, nose 1.31 into a relief
-print(f"with UART relief: board edge 42.60, native nose 43.91, recess 1.09 (cable-marginal)")
+      f"({BAD + ' unmatable (max usable ~1.0-1.5)' if recess > 1.6 else OK + ' matable'})")
 # Y retention inventory
-print("Y-stops for the board (x<=12.7 corridor):",
-      "back wall 42.6 only; rails are lateral; pads are pedestals ->",
-      f"free forward travel {42.6 - CONN_OVH - BRD_L - (-42.6):.1f} mm; "
-      "USB insertion force (5-20 N) >> board friction => board slides away, no mate")
+print(f"Y-stops for the board: back wall {WALL_IN_THICK} behind, stop rib "
+      f"y {pt.RIB_Y0}..{pt.RIB_Y1} (top Z {pt.RIB_TOP}) ahead -> free travel "
+      f"{(board_back_real - BRD_L) - pt.RIB_Y1:.2f} mm; USB insertion force "
+      "lands on the rib, the plug mates")
 
-sec("6. reset pinhole / mic / knob stack")
-reset_corr = box(41.5, pt.RESET_Y - 0.75, 44.5, pt.RESET_Y + 0.75)
-blk = skirt.intersection(reset_corr).area
-print(f"skirt in reset-pin corridor (z>=7.5): {blk:.2f} mm^2 "
-      f"(pinhole z 7.25..8.75 -> blocked above 7.5: {'yes' if blk > 0 else 'no'})")
-print("  note: DevKitC RST/BOOT buttons face UP at the back edge; a side pin at "
-      "y=20 z=8 aims at the bare board edge — cannot actuate any button anyway")
-mic_zone = box(-7.0, -43.25, 7.0, -42.1)
+sec("6. mic breakout / knob stack (reset pinhole removed: the DevKitC "
+    "RST/BOOT buttons face UP at the back edge — a side pin cannot reach)")
+mic_zone = box(-7.0, -43.8, 7.0, -42.1)
 print(f"skirt in INMP441 flush-mount zone (front wall, |x|<=7): "
-      f"{skirt.intersection(mic_zone).area:.2f} mm^2 (module on inner wall face "
-      f"crosses z7.5 -> hits skirt unless notched or mounted low/angled)")
-shaft_tip = 14.0 + 15.0                      # EC11 L15, mounting face = plate underside
+      f"{skirt.intersection(mic_zone).area:.2f} mm^2 "
+      f"(front-center skirt notch x -9..+9 keeps the corridor clear)")
+shaft_tip = pl.PLATE_Z0 + 15.0               # EC11 L15, mounting face = plate underside
 bore_ceil = pl.KNOB_Z0 + pk.CEIL_Z0
+nut_free = pk.NUT_DEPTH - 0.2
 print(f"EC11 L15 shaft tip Z {shaft_tip:.1f} vs knob bore ceiling Z {bore_ceil:.1f} "
-      f"-> knob rides +{max(0.0, shaft_tip - bore_ceil):.1f}; nut stack (~2.0) on plate "
-      f"top vs knob gap 1.0 -> rides on nut ~+1.0 (cosmetic)")
+      f"-> knob rides +{max(0.0, shaft_tip - bore_ceil):.1f} (use L12.5, or cosmetic); "
+      f"M7 nut (~2.2 tall) swallowed by the Ø{pk.NUT_D} x {nut_free:.1f} bottom recess")
 
-sec("7. tray shell inventory (28 shells)")
+sec("7. tray shell inventory")
 V, F = tray_mesh._np()
 parent = list(range(len(F)))
 def find(x):
