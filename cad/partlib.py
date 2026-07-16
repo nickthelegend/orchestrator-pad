@@ -51,31 +51,39 @@ KNOB_Z0 = 20.0
 
 COLORS = {
     "tray": "#AEB4BC", "plate": "#F4F5F7", "knob": "#E8E9EB",
-    "preset": "#D8DCE2", "codex": "#1A1A1A", "claude": "#D97757",
+    "preset": "#D8DCE2", "codex": "#6366F1", "claude": "#D97757",
     "antigravity": "#2D6BFF", "opencode": "#FAFAF8", "kiro": "#7A3FF2",
-    "cursor": "#26282E", "util": "#FFFFFF", "voice": "#FFFFFF",
+    "cursor": "#26282E", "grok": "#141414", "util": "#FFFFFF", "voice": "#FFFFFF",
 }
+
+# glyph legend infills (printed/painted contrast fill in the deboss):
+# white on colored caps, dark on white/light caps so every legend is legible
+LEGEND_LIGHT = "#FFFFFF"
+LEGEND_DARK = "#3F444D"
+LEGEND_MID = "#8A919E"
 
 
 def key_layout():
-    """All 14 switch positions: id, glyph, grid center, width in units, color."""
-    K = lambda i, g, c, r, u, col: dict(
-        id=i, glyph=g, x=COL_X[c] if u == 1 else 0.0, y=ROW_Y[r], units=u, color=col)
+    """All 14 switch positions: id, glyph, grid center, width in units,
+    cap color, legend (infill) color."""
+    K = lambda i, g, c, r, u, col, leg: dict(
+        id=i, glyph=g, x=COL_X[c] if u == 1 else 0.0, y=ROW_Y[r], units=u,
+        color=col, legend=leg)
     return [
-        K("cursor",  "cursor", 1, 0, 1, COLORS["cursor"]),
-        K("preset2", "ring",   2, 0, 1, COLORS["preset"]),
-        K("preset3", "target", 3, 0, 1, COLORS["preset"]),
-        K("codex",   "X",      0, 1, 1, COLORS["codex"]),
-        K("claude",  "claude", 1, 1, 1, COLORS["claude"]),
-        K("antigravity", "antigravity", 2, 1, 1, COLORS["antigravity"]),
-        K("opencode", "opencode", 3, 1, 1, COLORS["opencode"]),
-        K("kiro",    "kiro",   0, 2, 1, COLORS["kiro"]),
-        K("run",     "bolt",   1, 2, 1, COLORS["util"]),
-        K("approve", "check",  2, 2, 1, COLORS["util"]),
-        K("reject",  "cross",  3, 2, 1, COLORS["util"]),
-        K("prompt",  "prompt", 0, 3, 1, COLORS["util"]),
-        K("voice",   "mic",    0, 3, 2, COLORS["voice"]),   # x forced to 0 below
-        K("send",    "send",   3, 3, 1, COLORS["util"]),
+        K("cursor",  "cursor", 1, 0, 1, COLORS["cursor"], LEGEND_LIGHT),
+        K("codex",   "codex",  2, 0, 1, COLORS["codex"], LEGEND_LIGHT),
+        K("preset3", "target", 3, 0, 1, COLORS["preset"], LEGEND_MID),
+        K("grok",    "grok",   0, 1, 1, COLORS["grok"], LEGEND_LIGHT),
+        K("claude",  "claude", 1, 1, 1, COLORS["claude"], LEGEND_LIGHT),
+        K("antigravity", "antigravity", 2, 1, 1, COLORS["antigravity"], LEGEND_LIGHT),
+        K("opencode", "opencode", 3, 1, 1, COLORS["opencode"], LEGEND_DARK),
+        K("kiro",    "kiro",   0, 2, 1, COLORS["kiro"], LEGEND_LIGHT),
+        K("run",     "bolt",   1, 2, 1, COLORS["util"], LEGEND_DARK),
+        K("approve", "check",  2, 2, 1, COLORS["util"], LEGEND_DARK),
+        K("reject",  "cross",  3, 2, 1, COLORS["util"], LEGEND_DARK),
+        K("prompt",  "prompt", 0, 3, 1, COLORS["util"], LEGEND_DARK),
+        K("voice",   "mic",    0, 3, 2, COLORS["voice"], LEGEND_DARK),  # x forced to 0
+        K("send",    "send",   3, 3, 1, COLORS["util"], LEGEND_DARK),
     ]
 
 
@@ -195,6 +203,27 @@ def _logo_cursor():
     return hexagon.difference(Polygon([(-1.15, 0.55), (3.42, 1.62), (0.12, -3.88)]))
 
 
+def _logo_codex():
+    """Codex cloud: 7-lobe puff with a raised >_ prompt inside."""
+    lobes = [Point(2.55 * math.cos(math.radians(a)),
+                   2.55 * math.sin(math.radians(a))).buffer(rr, quad_segs=14)
+             for a, rr in [(95, 2.25), (40, 2.0), (-5, 2.05), (-55, 2.0),
+                           (-115, 2.1), (-170, 2.0), (145, 2.05)]]
+    cloud = _smooth(unary_union(lobes + [Point(0, 0).buffer(3.3, quad_segs=16)]), 0.45)
+    chev = _stroke([(-2.05, 1.45), (-0.55, 0.1), (-2.05, -1.25)], 1.2)
+    bar = box(0.15, -1.45, 2.05, -0.5)
+    return cloud.difference(chev.union(bar))
+
+
+def _logo_grok():
+    """Grok: circle broken by a long diagonal slash with pointed ends."""
+    ring = _stroke(_arc(0, 0, 2.95, 0, 360, 90), 1.15)
+    blade = affinity.rotate(
+        Polygon([(-6.1, 0), (0, 0.6), (6.1, 0), (0, -0.6)]), 45, origin=(0, 0))
+    blade = blade.intersection(box(-4.6, -4.6, 4.6, 4.6))
+    return ring.difference(blade.buffer(0.5)).union(blade)
+
+
 def glyph(name, size=10.0):
     """Deboss glyph as shapely geometry in a size x size box centered at 0."""
     g = {
@@ -228,6 +257,8 @@ def glyph(name, size=10.0):
         "opencode": _logo_opencode,
         "kiro": _logo_kiro,
         "cursor": _logo_cursor,
+        "codex": _logo_codex,
+        "grok": _logo_grok,
     }[name]()
     return affinity.scale(g, size / 10.0, size / 10.0, origin=(0, 0))
 
@@ -236,7 +267,7 @@ def glyph(name, size=10.0):
 # than the letter/symbol set. part_caps falls back to its default otherwise.
 GLYPH_SIZES = {
     "claude": 10.6, "antigravity": 10.4, "opencode": 9.8,
-    "kiro": 10.2, "cursor": 10.2,
+    "kiro": 10.2, "cursor": 10.2, "codex": 10.8, "grok": 10.4,
 }
 
 # ----------------------------------------------------------------- mesh ----

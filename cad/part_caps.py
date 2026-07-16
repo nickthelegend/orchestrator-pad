@@ -66,19 +66,32 @@ def _stem():
 
 
 def _cap(key):
-    """One finished keycap (local Z0 at the bottom) moved to world position."""
+    """One finished keycap + its legend infill (both moved to world position).
+
+    The legend is a separate flush prism filling the 0.6 deboss — print it in
+    a contrast filament (AMS/MMU or a manual color swap on the last layers),
+    or leave it out and paint-fill the recess. Glyph islands (eyes, facets)
+    stay part of the cap and poke through the legend's matching holes."""
     ob, ot, ib = (pl.rounded_rect(*dims) for dims in SIZES[key["units"]])
     m = _hollow_body(ob, ot, ib)
     gsize = pl.GLYPH_SIZES.get(key["glyph"], GLYPH_SIZE)
-    m += pl.prism(ot.difference(pl.glyph(key["glyph"], gsize)),
-                  CROWN_Z0, CAP_H)                                # glyph crown
+    gshape = pl.glyph(key["glyph"], gsize)
+    m += pl.prism(ot.difference(gshape), CROWN_Z0, CAP_H)         # glyph crown
     m += _stem()
-    return m.translate(key["x"], key["y"], pl.CAP_Z0)
+    legend = pl.prism(gshape, BODY_TOP, CAP_H)
+    x, y = key["x"], key["y"]
+    return (m.translate(x, y, pl.CAP_Z0), legend.translate(x, y, pl.CAP_Z0))
 
 
 def build():
-    """All 14 caps: [(key id, Mesh in world position, key color)]."""
-    return [(k["id"], _cap(k), k["color"]) for k in pl.key_layout()]
+    """All 14 caps + 14 legend infills:
+    [(key id, Mesh, cap color), (key id + "-legend", Mesh, legend color)...]"""
+    items = []
+    for k in pl.key_layout():
+        cap, legend = _cap(k)
+        items.append((k["id"], cap, k["color"]))
+        items.append((k["id"] + "-legend", legend, k["legend"]))
+    return items
 
 
 if __name__ == "__main__":

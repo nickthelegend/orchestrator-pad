@@ -1,8 +1,8 @@
 # Orchestrator Pad — dimensional spec (v0.2)
 
 Open-source ESP32 macropad for orchestrating coding agents: lock a target agent
-(Codex / Claude Code / Antigravity / opencode / Kiro / Cursor), hold-to-talk
-voice capture, and a dial that sets model effort
+(Grok / Codex / Claude Code / Antigravity / opencode / Kiro / Cursor),
+hold-to-talk voice capture, and a dial that sets model effort
 (`low → medium → high → xhigh → max → ultracode`).
 
 All dimensions in **mm**. Axes: X right, Y back (away from user), Z up.
@@ -17,8 +17,9 @@ Row centers Y: +28.575, +9.525, -9.525, -28.575 (rows 0..3, row 0 = back/top)
 |---|---|---|
 | r0c0 | EC11 rotary encoder (effort dial) | knurled knob, tick dot |
 | r0c1 | agent key: Cursor | `cursor` (cube, raised facet) |
-| r0c2..c3 | preset/status keys (translucent look) | `ring`, `target` |
-| r1c0..c3 | agent keys: Codex, Claude Code, Antigravity, opencode | `X`, `claude` (pixel-pal), `antigravity` (arch), `opencode` (frame) |
+| r0c2 | agent key: Codex | `codex` (cloud, raised `>_`) |
+| r0c3 | preset/status key (translucent look) | `target` |
+| r1c0..c3 | agent keys: Grok, Claude Code, Antigravity, opencode | `grok` (circle-slash), `claude` (pixel-pal), `antigravity` (arch), `opencode` (frame) |
 | r2c0 | agent key: Kiro | `kiro` (ghost) |
 | r2c1..c3 | run / approve / reject | `bolt`, `check`, `cross` |
 | r3c0 | prompt/terminal key | `prompt` |
@@ -84,8 +85,15 @@ Total: **14 MX switches** (13 x 1u + 1 x 2u), 1 EC11 encoder.
   4.15 x 1.35, depth 3.9 (friction fit on MX stem).
 - Glyphs debossed **0.6** into the top: build the top 0.8 mm of the cap as a
   layer with glyph-shaped holes; solid body below ends 0.6 lower, glyph
-  islands (e.g. center of `O`) overlap 0.2 into the body below so every
+  islands (e.g. the pixel-pal's eyes) overlap 0.2 into the body below so every
   shell fuses when sliced.
+- **Legend infills**: each glyph also exports as a separate flush 0.6 prism
+  (`<id>-legend` items, merged into `exports/legends-all.stl`, same drop as
+  `caps-all.stl` so both stay aligned). Print caps + legends together in two
+  colors (AMS/MMU, or a manual filament swap on the last 3 layers when caps
+  print top-face-down), or skip the file and paint-fill the recesses. Legend
+  colors per key live in `partlib.key_layout()` (white on colored caps, dark
+  gray on white caps).
 
 ### Knob — `part_knob.py`
 - Ø17.0, height 15.0. Knurl: 24 flutes (Ø1.6 scallops on the rim).
@@ -101,17 +109,20 @@ Total: **14 MX switches** (13 x 1u + 1 x 2u), 1 EC11 encoder.
 - Caps: bottom face at **Z=24.5** (switch seated, cap floats ~5.5 over plate).
 - Knob: bottom at **Z=20.0** over r0c0 (M7 nut hidden in the recess).
 - Exports: `exports/orchestrator-pad-assembled.glb`, `exports/orchestrator-pad-exploded.glb`
-  (tray +0 / plate +20 / caps +40 / knob +52), plus one STL per printable part.
+  (tray +0 / plate +20 / caps +40 / knob +52), plus one STL per printable part
+  (`tray`, `plate`, `caps-all`, `legends-all`, `knob`).
 
 ## Colors (GLB preview only)
-tray `#AEB4BC`, plate `#F4F5F7`, preset caps `#D8DCE2`, Codex `#1A1A1A`,
-Claude Code `#D97757`, Antigravity `#2D6BFF`, opencode `#FAFAF8`,
-Kiro `#7A3FF2`, Cursor `#26282E`, run/approve/reject/prompt/send `#FFFFFF`,
-voice bar `#FFFFFF`, knob `#E8E9EB`.
+tray `#AEB4BC`, plate `#F4F5F7`, preset cap `#D8DCE2`, Grok `#141414`,
+Codex `#6366F1`, Claude Code `#D97757`, Antigravity `#2D6BFF`,
+opencode `#FAFAF8`, Kiro `#7A3FF2`, Cursor `#26282E`,
+run/approve/reject/prompt/send `#FFFFFF`, voice bar `#FFFFFF`, knob `#E8E9EB`.
+Legends: white `#FFFFFF` on colored caps, dark `#3F444D` on white caps,
+mid `#8A919E` on the preset.
 
-Logo glyphs (`claude`, `antigravity`, `opencode`, `kiro`, `cursor`) are
-simplified geometric homages debossed 0.6 into the caps; the original marks
-belong to their respective projects.
+Logo glyphs (`grok`, `codex`, `claude`, `antigravity`, `opencode`, `kiro`,
+`cursor`) are simplified geometric homages debossed 0.6 into the caps; the
+original marks belong to their respective projects.
 
 ## BOM (v0)
 ESP32-S3 DevKitC-1 **without factory pin headers** (or clip the pins flush —

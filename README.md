@@ -40,12 +40,17 @@ on a bed-slinger in an evening.
 |---|---|---|---|
 | 🎛 | **Effort dial** | knurled knob | detents map to `low → medium → high → xhigh → max → ultracode` |
 | ⬜ | **Cursor** | cube-facet logo | lock jobs to Cursor |
-| ⚪ | Presets ×2 | `◦` `◎` | saved contexts / status (RGB glow optional) |
-| ⬛ | **Codex** | `X` | lock jobs to Codex |
+| 🟣 | **Codex** | cloud `>_` logo | lock jobs to Codex |
+| ⚪ | Preset | `◎` | saved context / status (RGB glow optional) |
+| ⬛ | **Grok** | circle-slash logo | lock jobs to Grok |
 | 🟧 | **Claude Code** | pixel-pal logo | lock jobs to Claude |
 | 🟦 | **Antigravity** | arch logo | lock jobs to Antigravity |
 | ⬜ | **opencode** | terminal-frame logo | lock jobs to OpenCode |
 | 🟪 | **Kiro** | ghost logo | lock jobs to Kiro |
+
+Every glyph is debossed 0.6 mm **and** ships with a matching legend infill
+piece, so the logos print in a contrast color (white on the colored caps,
+charcoal on the white ones) — no more squinting.
 | ⚡ | Run | `⚡` | kick off the queued job |
 | ✓ | Approve | `✓` | accept a plan / permission prompt |
 | ✕ | Reject | `✕` | decline / cancel |
@@ -78,13 +83,19 @@ stack by implementing one message handler.
 | Tray (bottom) | [`exports/tray.stl`](exports/tray.stl) | as exported, flat on bed | none |
 | Plate (top) | [`exports/plate.stl`](exports/plate.stl) | **flip 180°** — top face on bed | none |
 | Keycaps ×14 | [`exports/caps-all.stl`](exports/caps-all.stl) | **flip 180°** — cap tops on bed | none |
+| Legend infills ×14 | [`exports/legends-all.stl`](exports/legends-all.stl) | import **with** caps-all, flip together | none |
 | Dial knob | [`exports/knob.stl`](exports/knob.stl) | upright | none |
 
 0.4 mm nozzle · 0.2 mm layers · PETG or PLA. Slow the first layer and outer
-walls for crisp debossed glyphs. Each STL is a union of individually
-watertight shells — every mainstream slicer merges them automatically. Print
-the agent caps in colored filament (or swap colors per cap — they're separate
-islands on the plate).
+walls for crisp glyphs. Each STL is a union of individually watertight
+shells — every mainstream slicer merges them automatically.
+
+**Two-color legends:** import `caps-all` + `legends-all` in one plate (they're
+pre-aligned), flip 180° together, and assign the legend object a contrast
+filament (AMS/MMU). Flipped, the legends are the **first 3 layers on the
+bed**, so even a single-extruder printer can do it with one manual filament
+swap at layer 4. No multi-color setup? Print caps alone and paint-fill the
+recesses — they're 0.6 mm deep on purpose.
 
 Tolerances assume a reasonably tuned printer; every clearance is a named
 constant in [`SPEC.md`](SPEC.md) if yours runs tight.
@@ -145,7 +156,7 @@ cd cad
 ## Roadmap
 
 - [x] v1 printable enclosure, caps, knob — parametric CAD + audited fit (branch [`v1`](../../tree/v1))
-- [x] v2 logo keycaps (Claude Code · Antigravity · opencode · Kiro · Cursor), taller case for full DevKitC clearance, USB mating relief
+- [x] v2 logo keycaps (Grok · Codex · Claude Code · Antigravity · opencode · Kiro · Cursor), two-color legend infills, taller case for full DevKitC clearance, USB mating relief
 - [ ] `firmware/` — ESP-IDF: matrix scan, encoder detents, hold-to-talk ring
       buffer, WebSocket client, USB-HID fallback
 - [ ] daemon reference handler + pairing flow

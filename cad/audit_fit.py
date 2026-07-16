@@ -28,9 +28,9 @@ def sec(t):
 # ---------------------------------------------------------------- 1. grid ----
 sec("1. key grid vs SPEC")
 spec_grid = {
-    ("cursor"): (pl.COL_X[1], pl.ROW_Y[0]), ("preset2"): (pl.COL_X[2], pl.ROW_Y[0]),
+    ("cursor"): (pl.COL_X[1], pl.ROW_Y[0]), ("codex"): (pl.COL_X[2], pl.ROW_Y[0]),
     ("preset3"): (pl.COL_X[3], pl.ROW_Y[0]),
-    ("codex"): (pl.COL_X[0], pl.ROW_Y[1]), ("claude"): (pl.COL_X[1], pl.ROW_Y[1]),
+    ("grok"): (pl.COL_X[0], pl.ROW_Y[1]), ("claude"): (pl.COL_X[1], pl.ROW_Y[1]),
     ("antigravity"): (pl.COL_X[2], pl.ROW_Y[1]), ("opencode"): (pl.COL_X[3], pl.ROW_Y[1]),
     ("kiro"): (pl.COL_X[0], pl.ROW_Y[2]), ("run"): (pl.COL_X[1], pl.ROW_Y[2]),
     ("approve"): (pl.COL_X[2], pl.ROW_Y[2]), ("reject"): (pl.COL_X[3], pl.ROW_Y[2]),

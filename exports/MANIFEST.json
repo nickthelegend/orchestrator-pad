@@ -1,16 +1,16 @@
 {
-  "generated": "2026-07-16T08:22:55+00:00",
+  "generated": "2026-07-16T17:24:32+00:00",
   "files": [
     {
       "path": "exports/orchestrator-pad-assembled.glb",
-      "bytes": 3333800,
-      "triangles": 39528,
+      "bytes": 3994140,
+      "triangles": 47252,
       "watertight": true
     },
     {
       "path": "exports/orchestrator-pad-exploded.glb",
-      "bytes": 3333800,
-      "triangles": 39528,
+      "bytes": 3994112,
+      "triangles": 47252,
       "watertight": true
     },
     {
@@ -27,8 +27,14 @@
     },
     {
       "path": "exports/caps-all.stl",
-      "bytes": 847084,
-      "triangles": 16940,
+      "bytes": 907084,
+      "triangles": 18140,
+      "watertight": true
+    },
+    {
+      "path": "exports/legends-all.stl",
+      "bytes": 326284,
+      "triangles": 6524,
       "watertight": true
     },
     {
@@ -39,9 +45,9 @@
     }
   ],
   "totals": {
-    "files": 6,
-    "bytes": 8644336,
-    "triangles": 118584,
+    "files": 7,
+    "bytes": 10351272,
+    "triangles": 141756,
     "watertight": true
   },
   "items": [
@@ -67,10 +73,24 @@
       "watertight": true
     },
     {
-      "name": "preset2",
-      "triangles": 1536,
-      "shells": 4,
-      "volume_mm3": 1033.54,
+      "name": "cursor-legend",
+      "triangles": 84,
+      "shells": 1,
+      "volume_mm3": 19.86,
+      "watertight": true
+    },
+    {
+      "name": "codex",
+      "triangles": 2020,
+      "shells": 5,
+      "volume_mm3": 998.37,
+      "watertight": true
+    },
+    {
+      "name": "codex-legend",
+      "triangles": 1204,
+      "shells": 1,
+      "volume_mm3": 37.7,
       "watertight": true
     },
     {
@@ -81,10 +101,24 @@
       "watertight": true
     },
     {
-      "name": "codex",
-      "triangles": 1052,
+      "name": "preset3-legend",
+      "triangles": 900,
+      "shells": 2,
+      "volume_mm3": 18.1,
+      "watertight": true
+    },
+    {
+      "name": "grok",
+      "triangles": 1768,
       "shells": 3,
-      "volume_mm3": 1027.31,
+      "volume_mm3": 1034.4,
+      "watertight": true
+    },
+    {
+      "name": "grok-legend",
+      "triangles": 920,
+      "shells": 3,
+      "volume_mm3": 16.08,
       "watertight": true
     },
     {
@@ -95,10 +129,24 @@
       "watertight": true
     },
     {
+      "name": "claude-legend",
+      "triangles": 116,
+      "shells": 1,
+      "volume_mm3": 34.23,
+      "watertight": true
+    },
+    {
       "name": "antigravity",
       "triangles": 1656,
       "shells": 3,
       "volume_mm3": 1010.86,
+      "watertight": true
+    },
+    {
+      "name": "antigravity-legend",
+      "triangles": 824,
+      "shells": 1,
+      "volume_mm3": 30.21,
       "watertight": true
     },
     {
@@ -109,10 +157,24 @@
       "watertight": true
     },
     {
+      "name": "opencode-legend",
+      "triangles": 32,
+      "shells": 1,
+      "volume_mm3": 20.96,
+      "watertight": true
+    },
+    {
       "name": "kiro",
       "triangles": 1948,
       "shells": 5,
       "volume_mm3": 1026.03,
+      "watertight": true
+    },
+    {
+      "name": "kiro-legend",
+      "triangles": 1132,
+      "shells": 1,
+      "volume_mm3": 21.1,
       "watertight": true
     },
     {
@@ -123,10 +185,24 @@
       "watertight": true
     },
     {
+      "name": "run-legend",
+      "triangles": 20,
+      "shells": 1,
+      "volume_mm3": 8.86,
+      "watertight": true
+    },
+    {
       "name": "approve",
       "triangles": 968,
       "shells": 3,
       "volume_mm3": 1040.97,
+      "watertight": true
+    },
+    {
+      "name": "approve-legend",
+      "triangles": 136,
+      "shells": 1,
+      "volume_mm3": 12.14,
       "watertight": true
     },
     {
@@ -137,10 +213,24 @@
       "watertight": true
     },
     {
+      "name": "reject-legend",
+      "triangles": 220,
+      "shells": 1,
+      "volume_mm3": 17.57,
+      "watertight": true
+    },
+    {
       "name": "prompt",
       "triangles": 984,
       "shells": 3,
       "volume_mm3": 1042.28,
+      "watertight": true
+    },
+    {
+      "name": "prompt-legend",
+      "triangles": 144,
+      "shells": 2,
+      "volume_mm3": 11.36,
       "watertight": true
     },
     {
@@ -151,10 +241,24 @@
       "watertight": true
     },
     {
+      "name": "voice-legend",
+      "triangles": 780,
+      "shells": 2,
+      "volume_mm3": 16.44,
+      "watertight": true
+    },
+    {
       "name": "send",
       "triangles": 844,
       "shells": 3,
       "volume_mm3": 1045.23,
+      "watertight": true
+    },
+    {
+      "name": "send-legend",
+      "triangles": 12,
+      "shells": 1,
+      "volume_mm3": 9.58,
       "watertight": true
     },
     {
@@ -181,12 +285,12 @@
         "color": "#26282E"
       },
       {
-        "id": "preset2",
-        "glyph": "ring",
+        "id": "codex",
+        "glyph": "codex",
         "units": 1,
         "x": 9.525,
         "y": 28.575000000000003,
-        "color": "#D8DCE2"
+        "color": "#6366F1"
       },
       {
         "id": "preset3",
@@ -197,12 +301,12 @@
         "color": "#D8DCE2"
       },
       {
-        "id": "codex",
-        "glyph": "X",
+        "id": "grok",
+        "glyph": "grok",
         "units": 1,
         "x": -28.575000000000003,
         "y": 9.525,
-        "color": "#1A1A1A"
+        "color": "#141414"
       },
       {
         "id": "claude",
