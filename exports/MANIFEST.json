@@ -1,28 +1,28 @@
 {
-  "generated": "2026-07-16T17:24:32+00:00",
+  "generated": "2026-07-19T06:47:23+00:00",
   "files": [
     {
       "path": "exports/orchestrator-pad-assembled.glb",
-      "bytes": 3994140,
-      "triangles": 47252,
+      "bytes": 4375500,
+      "triangles": 51792,
       "watertight": true
     },
     {
       "path": "exports/orchestrator-pad-exploded.glb",
-      "bytes": 3994112,
-      "triangles": 47252,
+      "bytes": 4375472,
+      "triangles": 51792,
       "watertight": true
     },
     {
       "path": "exports/tray.stl",
-      "bytes": 394884,
-      "triangles": 7896,
+      "bytes": 622484,
+      "triangles": 12448,
       "watertight": true
     },
     {
       "path": "exports/plate.stl",
-      "bytes": 521284,
-      "triangles": 10424,
+      "bytes": 520684,
+      "triangles": 10412,
       "watertight": true
     },
     {
@@ -46,23 +46,23 @@
   ],
   "totals": {
     "files": 7,
-    "bytes": 10351272,
-    "triangles": 141756,
+    "bytes": 11340992,
+    "triangles": 155376,
     "watertight": true
   },
   "items": [
     {
       "name": "tray",
-      "triangles": 7896,
-      "shells": 33,
-      "volume_mm3": 34459.31,
+      "triangles": 12448,
+      "shells": 43,
+      "volume_mm3": 44476.76,
       "watertight": true
     },
     {
       "name": "plate",
-      "triangles": 10424,
-      "shells": 12,
-      "volume_mm3": 11073.17,
+      "triangles": 10412,
+      "shells": 11,
+      "volume_mm3": 11212.55,
       "watertight": true
     },
     {

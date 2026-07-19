@@ -108,19 +108,23 @@ constant in [`SPEC.md`](SPEC.md) if yours runs tight.
 
 | Qty | Part | Notes |
 |---|---|---|
-| 1 | **ESP32-S3 DevKitC-1** | *without* factory pin headers (or clip them flush) — it drops between the tray rails onto support pads, native USB port lines up with the case slot |
-| 14 | MX-style switches | 13 × 1u + 1 for the 2u voice bar; hand-wired 4×4 matrix |
+| 1 | **ESP32-S3 dev board** (WROOM-1, dual USB-C clones welcome) | factory pin headers are fine now — the board rides a shelf + bridge with 13.6 mm of pin/jumper clearance underneath; both USB-C ports exit the wide back window |
+| 14 | MX-style switches (3-pin plate-mount, donor-board pulls work) | 13 × 1u + 1 for the 2u voice bar; they clip into the plate's square holes exactly like a stock keyboard plate |
+| 1 | **4Ω 3W cavity speaker**, flange up to 72 × 42 mm | down-firing bay in the floor: grille slots + 4 × M2.5 self-tapper pilots |
+| 1 | **MAX98357A I2S amp** breakout | drops into the corner pocket, foam-tape mounted |
+| 1 | I2S MEMS microphone (INMP441 class, round or square) | glues behind the front mic grille |
 | 1 | EC11 rotary encoder | M7 bush mounts in the plate; 15 mm D-shaft; the knob hides the nut |
-| 1 | INMP441 I2S microphone | sits behind the front mic grille |
 | 4 | M3 heat-set inserts + **M3×8** button-head screws | tray bosses ← plate counterbores |
-| 4 | rubber feet Ø8 | recessed pockets underneath |
-| — | optional: WS2812 LEDs | under the three preset keys |
+| 4 | rubber feet, **≥3 mm tall** | give the down-firing speaker its air gap |
+| — | zip ties, jumper wires | wire posts with zip-tie notches are printed into the tray |
+| — | optional: WS2812 LEDs | under the preset key |
 
-Assembly: heat-set the four inserts, drop the DevKitC between the rails
-(USB-C into the back slot), clip the switches into the plate, hand-wire the
-matrix, glue the mic behind the grille, screw the sandwich together, press on
-caps and knob. A strip of kapton over the module can is cheap insurance under
-the switch pins.
+Assembly: heat-set the four inserts, screw the speaker over the floor grille,
+foam-tape the amp into its pocket, rest the board on the shelf + bridge
+(components up, USB out the back window), clip the switches into the plate,
+hand-wire the matrix, glue the mic behind the grille, zip-tie the slack to the
+posts, screw the sandwich together, press on caps and knob. A strip of kapton
+over the board is cheap insurance under the switch pins.
 
 ## The CAD is code
 
@@ -157,7 +161,8 @@ cd cad
 
 - [x] v1 printable enclosure, caps, knob — parametric CAD + audited fit (branch [`v1`](../../tree/v1))
 - [x] v2 logo keycaps (Claude Code · Antigravity · opencode · Kiro · Cursor), taller case for full DevKitC clearance, USB mating relief (branch [`v2`](../../tree/v2))
-- [x] **v3 (current)** — Grok + Codex keys (seven agents), two-color legend infills (`legends-all.stl`)
+- [x] v3 — Grok + Codex keys (seven agents), two-color legend infills (`legends-all.stl`) (branch [`v3`](../../tree/v3))
+- [x] **v4 (current)** — the fat base: 28 mm component bay with a down-firing speaker bay, amp pocket, board bridge with header-pin clearance, dual-USB-C window, and zip-tie wire posts
 - [ ] `firmware/` — ESP-IDF: matrix scan, encoder detents, hold-to-talk ring
       buffer, WebSocket client, USB-HID fallback
 - [ ] daemon reference handler + pairing flow
