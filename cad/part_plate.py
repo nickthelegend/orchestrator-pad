@@ -56,24 +56,28 @@ USB_NOTCH_Y0, USB_NOTCH_Y1 = 41.0, 44.0     # full skirt band (y 42.5..43.65)
 TOWER_D = 7.6                       # screw tower outer diameter
 TOWER_Z0 = part_tray.BOSS_TOP       # tray corner-boss top (25.5, SPEC "Tray")
 
-# ---- v5 switch sockets (donor-keyboard style, SPEC "Top plate") -----------
-# Each switch drops into a pocket under its plate cutout and its BASE seats
-# on a socket floor at exactly plate_top - 5.0 (the MX under-shoulder depth),
-# so the clips engage the 1.5 plate as usual while the body is fully caged.
-# The floor carries the MX footprint holes; the two contact pins protrude
-# ~2.1 below it — a solder-ready back face, like a PCB.
+# ---- v5.1 switch sockets + footprint deck (SPEC "Top plate") --------------
+# Each switch drops into a pocket under its plate cutout; the pocket WALLS
+# stop at the MX base-seat height, so the flipped plate prints as simple
+# towers (no bridges, no supports). The donor-style footprint floor is a
+# SEPARATE flat part — the "switch deck": one 1.2 sheet with all 14 MX
+# footprint clusters that prints flat on the bed (perfect holes), presses
+# up onto the switch posts/legs from below (friction fit), seats against
+# the wall rims, and leaves the contact pins protruding ~2.1 for soldering.
 SOCKET_WALL = 1.6                   # pocket wall thickness
 SOCKET_OUT_W = 17.3                 # pocket outer square (14.1 + 2*1.6)
 SOCKET_OUT_R = 1.7
 SOCKET_SEAT_DROP = 5.0              # MX shoulder->base depth below plate top
-SOCKET_FLOOR_T = 1.2
-MX_POST_D = 4.3                     # center post hole
-MX_PIN_D = 2.8                      # the two contact pin holes
+DECK_T = 1.2                        # switch-deck sheet thickness
+DECK_W, DECK_R = 78.0, 6.0          # deck outline (inside the skirt/towers)
+MX_POST_D = 4.15                    # center post hole (snug on the Ø4 post)
+MX_PIN_D = 2.0                      # the two contact pin holes (blade pins)
 MX_PIN_A = (-3.81, 2.54)            # contact 1 (offsets from key center,
 MX_PIN_B = (2.54, 5.08)             #  +Y toward the back — donor layout)
-MX_LEG_D = 2.0                      # 5-pin plastic leg holes (compatibility)
+MX_LEG_D = 1.85                     # 5-pin leg holes (snug on Ø1.7 legs)
 MX_LEGS = ((-5.08, 0.0), (5.08, 0.0))
-TOWER_CLEAR_D = 8.8                 # socket keep-out around the screw towers
+TOWER_CLEAR_D = 8.8                 # socket/deck keep-out around the towers
+KNOB_CUT_W = 16.0                   # deck cutout under the EC11 body
 
 
 def _at(geom, x, y):
@@ -124,28 +128,37 @@ def _tower_keepout():
                         for x, y in _screw_centers()])
 
 
-def _socket_shells(key, keepout):
-    """Pocket wall ring + footprint floor for one switch, in world XY.
-    Returns (wall_geom, floor_geom) 2D profiles (may be clipped by the
+def _socket_wall(key, keepout):
+    """Pocket wall ring for one switch, in world XY (clipped by the
     screw-tower keep-out on the three corner-adjacent keys)."""
     x, y = key["x"], key["y"]
     outer = _at(pl.rounded_rect(SOCKET_OUT_W, SOCKET_OUT_W, SOCKET_OUT_R), x, y)
     inner = _at(pl.rounded_rect(pl.MX_CUT, pl.MX_CUT, MX_CORNER_R), x, y)
-    wall = outer.difference(inner).difference(keepout)
-    holes = [_at(pl.circle(MX_POST_D), x, y),
-             _at(pl.circle(MX_PIN_D), x + MX_PIN_A[0], y + MX_PIN_A[1]),
-             _at(pl.circle(MX_PIN_D), x + MX_PIN_B[0], y + MX_PIN_B[1])]
-    holes += [_at(pl.circle(MX_LEG_D), x + lx, y + ly) for lx, ly in MX_LEGS]
-    floor = outer.difference(unary_union(holes)).difference(keepout)
-    return wall, floor
+    return outer.difference(inner).difference(keepout)
+
+
+def _deck_profile():
+    """The switch deck: one flat sheet with every MX footprint cluster.
+    Prints flat (perfect holes), presses onto the switch posts/legs from
+    below. Notched at the four screw towers/bosses, cut out under the EC11."""
+    sheet = pl.rounded_rect(DECK_W, DECK_W, DECK_R)
+    holes = []
+    for k in pl.key_layout():
+        x, y = k["x"], k["y"]
+        holes += [_at(pl.circle(MX_POST_D), x, y),
+                  _at(pl.circle(MX_PIN_D), x + MX_PIN_A[0], y + MX_PIN_A[1]),
+                  _at(pl.circle(MX_PIN_D), x + MX_PIN_B[0], y + MX_PIN_B[1])]
+        holes += [_at(pl.circle(MX_LEG_D), x + lx, y + ly) for lx, ly in MX_LEGS]
+    holes.append(_at(pl.rounded_rect(KNOB_CUT_W, KNOB_CUT_W, 2.0), *pl.KNOB_POS))
+    return sheet.difference(unary_union(holes)).difference(_tower_keepout())
 
 
 def build():
     z_a1 = pl.PLATE_Z1 - CBORE_DEPTH        # 28.7 — deep band top
     z_b0 = z_a1 - OVERLAP                   # 28.5 — counterbore band bottom
     z_into_plate = pl.PLATE_Z0 + OVERLAP    # 28.2 — skirt/tower fuse height
-    seat_z = pl.PLATE_Z1 - SOCKET_SEAT_DROP  # 24.5 — switch base seat
-    floor_z0 = seat_z - SOCKET_FLOOR_T       # 23.3 — socket floor bottom
+    seat_z = pl.PLATE_Z1 - SOCKET_SEAT_DROP  # 24.5 — switch base / deck seat
+    floor_z0 = seat_z - DECK_T               # 23.3 — deck bottom (pins +2.1)
 
     m = pl.Mesh()
 
@@ -163,16 +176,16 @@ def build():
                           _at(pl.circle(SCREW_D), x, y))
         m += pl.prism(tower, TOWER_Z0, z_into_plate)
 
-    # v5: one socket box per switch — wall ring up into the plate, footprint
-    # floor at the MX base seat (floor overlaps the wall ring radially over
-    # floor_z0..seat_z, so the box fuses into one printable body)
+    # v5.1: socket walls stop AT the seat height — flipped for printing they
+    # are plain towers off the slab (no bridges, no supports). The footprint
+    # floors live on the separate flat-printed switch deck below.
     keepout = _tower_keepout()
     for key in pl.key_layout():
-        wall, floor = _socket_shells(key, keepout)
-        m += pl.prism(wall, floor_z0, z_into_plate)
-        m += pl.prism(floor, floor_z0, seat_z)
+        m += pl.prism(_socket_wall(key, keepout), seat_z, z_into_plate)
 
-    return [("plate", m, pl.COLORS["plate"])]
+    deck = pl.prism(_deck_profile(), floor_z0, seat_z)
+    return [("plate", m, pl.COLORS["plate"]),
+            ("switch-deck", deck, "#C9CFD6")]
 
 
 if __name__ == "__main__":

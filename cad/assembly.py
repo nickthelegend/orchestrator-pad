@@ -102,8 +102,11 @@ def main():
     by_group = dict(groups)
 
     tray = _merge(m for _n, m, _c in by_group["tray"])          # already Z=0
-    plate = _merge(m for _n, m, _c in by_group["plate"])
+    # the switch deck is its own flat print — keep it out of plate.stl
+    plate = _merge(m for n, m, _c in by_group["plate"] if n != "switch-deck")
     plate.translate(dz=-_min_z(plate))                          # min Z -> 0
+    deck = _merge(m for n, m, _c in by_group["plate"] if n == "switch-deck")
+    deck.translate(dz=-_min_z(deck))                            # prints flat
     # caps and their legend infills export as separate STLs (same drop so they
     # stay aligned for two-color printing: import both, flip together 180)
     cap_items = [(n, m) for n, m, _c in by_group["caps"] if not n.endswith("-legend")]
@@ -118,6 +121,7 @@ def main():
 
     print("validating print meshes:")
     for fname, mesh in [("tray.stl", tray), ("plate.stl", plate),
+                        ("switch-deck.stl", deck),
                         ("caps-all.stl", caps), ("legends-all.stl", legends),
                         ("knob.stl", knob)]:
         rep = pl.validate(mesh)

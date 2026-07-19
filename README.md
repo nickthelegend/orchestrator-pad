@@ -82,6 +82,7 @@ stack by implementing one message handler.
 |---|---|---|---|
 | Tray (bottom) | [`exports/tray.stl`](exports/tray.stl) | as exported, flat on bed | none |
 | Plate (top) | [`exports/plate.stl`](exports/plate.stl) | **flip 180°** — top face on bed | none |
+| Switch deck | [`exports/switch-deck.stl`](exports/switch-deck.stl) | as exported, flat on bed | none |
 | Keycaps ×14 | [`exports/caps-all.stl`](exports/caps-all.stl) | **flip 180°** — cap tops on bed | none |
 | Legend infills ×14 | [`exports/legends-all.stl`](exports/legends-all.stl) | import **with** caps-all, flip together | none |
 | Dial knob | [`exports/knob.stl`](exports/knob.stl) | upright | none |
@@ -103,12 +104,18 @@ recesses — they're 0.6 mm deep on purpose.
 <img src="docs/images/plate-underside.png" alt="Plate underside — donor-keyboard-style switch sockets with MX footprint floors" width="640">
 </div>
 
-The plate's underside is a field of donor-keyboard-style socket wells: each
-switch clips into the plate while its body seats on a footprint floor
-(center-post hole + the two slanted contact holes + 5-pin legs). The metal
-pins stick out **2.1 mm** through the back — flow solder on, run your matrix
-wire, done. Printed flipped, the socket floors are ~14 mm internal bridges:
-enable bridging in your slicer; slight sag is invisible and harmless.
+Donor-keyboard-style mounting, engineered to print clean: the plate's
+underside has a socket well caging every switch body, and the footprints
+live on a separate **switch deck** — one flat sheet with all 14 MX clusters
+(center-post hole + the two slanted contact holes + 5-pin legs). Because the
+deck prints flat on the bed, every hole is perfectly round and the flipped
+plate is pure vertical walls — **no bridges, no floating regions, no
+supports on either part**.
+
+Assembly: clip the switches into the plate, then press the deck up onto
+them from below — it friction-fits on the center posts and 5-pin legs and
+seats against the socket-wall rims. The metal pins stick out **2.1 mm**
+through the deck: flow solder on, run your matrix wire, done.
 
 Tolerances assume a reasonably tuned printer; every clearance is a named
 constant in [`SPEC.md`](SPEC.md) if yours runs tight.
@@ -176,7 +183,7 @@ cd cad
 - [x] v2 logo keycaps (Claude Code · Antigravity · opencode · Kiro · Cursor), taller case for full DevKitC clearance, USB mating relief (branch [`v2`](../../tree/v2))
 - [x] v3 — Grok + Codex keys (seven agents), two-color legend infills (`legends-all.stl`) (branch [`v3`](../../tree/v3))
 - [x] v4 — the fat base: 28 mm component bay with a down-firing speaker bay, amp pocket, board bridge with header-pin clearance, dual-USB-C window, and zip-tie wire posts
-- [x] **v5 (current)** — donor-style switch sockets under the plate: footprint floors, pins protrude 2.1 mm for direct soldering (branch [`v4`](../../tree/v4) holds the socket-less base)
+- [x] **v5 (current)** — donor-style switch sockets + the flat-printed **switch deck** (footprint sheet, pins protrude 2.1 mm for direct soldering; zero bridges/supports on the plate) (branch [`v4`](../../tree/v4) holds the socket-less base)
 - [ ] `firmware/` — ESP-IDF: matrix scan, encoder detents, hold-to-talk ring
       buffer, WebSocket client, USB-HID fallback
 - [ ] daemon reference handler + pairing flow

@@ -1,16 +1,16 @@
 {
-  "generated": "2026-07-19T07:04:10+00:00",
+  "generated": "2026-07-19T14:40:53+00:00",
   "files": [
     {
       "path": "exports/orchestrator-pad-assembled.glb",
-      "bytes": 6516500,
-      "triangles": 77280,
+      "bytes": 6358360,
+      "triangles": 75388,
       "watertight": true
     },
     {
       "path": "exports/orchestrator-pad-exploded.glb",
-      "bytes": 6516472,
-      "triangles": 77280,
+      "bytes": 6358332,
+      "triangles": 75388,
       "watertight": true
     },
     {
@@ -21,8 +21,14 @@
     },
     {
       "path": "exports/plate.stl",
-      "bytes": 1795084,
-      "triangles": 35900,
+      "bytes": 765884,
+      "triangles": 15316,
+      "watertight": true
+    },
+    {
+      "path": "exports/switch-deck.stl",
+      "bytes": 934684,
+      "triangles": 18692,
       "watertight": true
     },
     {
@@ -45,9 +51,9 @@
     }
   ],
   "totals": {
-    "files": 7,
-    "bytes": 16897392,
-    "triangles": 231840,
+    "files": 8,
+    "bytes": 16486596,
+    "triangles": 226164,
     "watertight": true
   },
   "items": [
@@ -60,9 +66,16 @@
     },
     {
       "name": "plate",
-      "triangles": 35900,
-      "shells": 39,
-      "volume_mm3": 22331.64,
+      "triangles": 15316,
+      "shells": 25,
+      "volume_mm3": 16270.19,
+      "watertight": true
+    },
+    {
+      "name": "switch-deck",
+      "triangles": 18692,
+      "shells": 1,
+      "volume_mm3": 6501.28,
       "watertight": true
     },
     {

@@ -405,31 +405,49 @@ print(f"  round mic module glue zone (x -27..-13 on the front liner) vs oval bum
       f"{pl.FLOOR + 1.5:.1f} {check('mic module above speaker', d_mod_bump >= 0.5)}")
 
 # ------------------------------------------------------- 12. watertight ----
-sec("12. v5 switch sockets (donor-style pockets + solder-through floors)")
+sec("12. v5.1 switch sockets + flat footprint deck")
 seat_z = pl.PLATE_Z1 - part_plate.SOCKET_SEAT_DROP
-floor_z0 = seat_z - part_plate.SOCKET_FLOOR_T
+floor_z0 = seat_z - part_plate.DECK_T
 pin_tip = seat_z - 3.3
-print(f"base seat Z {seat_z:.1f} (plate top {pl.PLATE_Z1} - 5.0)",
+print(f"base/deck seat Z {seat_z:.1f} (plate top {pl.PLATE_Z1} - 5.0)",
       check("seat at plate_top-5.0", abs(seat_z - (pl.PLATE_Z1 - 5.0)) < 1e-9))
 print(f"pin tips Z {pin_tip:.1f} protrude {floor_z0 - pin_tip:.1f} below the "
-      f"floor ({floor_z0:.1f})",
+      f"deck ({floor_z0:.1f})",
       check("pins solder-accessible", floor_z0 - pin_tip >= 1.5))
-print(f"floor bottom {floor_z0:.1f} vs header insulator top {INSUL_TOP:.1f}",
-      check("socket floor clears insulators", floor_z0 - INSUL_TOP >= 1.0))
+print(f"deck bottom {floor_z0:.1f} vs header insulator top {INSUL_TOP:.1f}",
+      check("deck clears insulators", floor_z0 - INSUL_TOP >= 1.0))
 ko = part_plate._tower_keepout()
-sock_ok = holes_ok = clear_ok = True
+deck = part_plate._deck_profile()
+sock_ok = clear_ok = True
+holes_ok = True
 for k in pl.key_layout():
-    wall, floor = part_plate._socket_shells(k, ko)
-    sock_ok &= (not wall.is_empty) and (not floor.is_empty)
+    wall = part_plate._socket_wall(k, ko)
+    sock_ok &= not wall.is_empty
     for dx, dy in [(0, 0), part_plate.MX_PIN_A, part_plate.MX_PIN_B]:
-        holes_ok &= not floor.contains(Point(k["x"] + dx, k["y"] + dy))
+        holes_ok &= not deck.contains(Point(k["x"] + dx, k["y"] + dy))
     for cx, cy in [(sx * pl.BOSS_XY, sy * pl.BOSS_XY)
                    for sx in (-1, 1) for sy in (-1, 1)]:
         tower = affinity.translate(pl.circle(part_plate.TOWER_D), cx, cy)
-        clear_ok &= wall.distance(tower) >= 0.15 and floor.distance(tower) >= 0.15
-print("all 14 sockets non-empty:", check("sockets built", sock_ok))
-print("post + contact holes open in every floor:", check("footprint holes", holes_ok))
-print("sockets clear the screw towers (>=0.15):", check("socket-tower", clear_ok))
+        clear_ok &= wall.distance(tower) >= 0.15
+        clear_ok &= deck.distance(tower) >= 0.15
+print("all 14 socket walls non-empty:", check("sockets built", sock_ok))
+print("post + contact holes open in the deck at every key:",
+      check("deck footprint holes", holes_ok))
+print("walls + deck clear the screw towers (>=0.15):", check("socket-tower", clear_ok))
+ec_cut = affinity.translate(
+    box(-EC11_BODY_SQ / 2, -EC11_BODY_SQ / 2, EC11_BODY_SQ / 2, EC11_BODY_SQ / 2),
+    *pl.KNOB_POS)
+print("deck cutout swallows the EC11 body:",
+      check("deck EC11 cutout", not deck.intersects(ec_cut)))
+# printability: flipped plate must have NO geometry hanging below the socket
+# wall bottoms other than the skirt/towers (i.e., no floors = no bridges)
+plate_mesh = part_plate.build()[0][1]
+import numpy as np
+V = np.asarray(plate_mesh.V)
+in_socket_zone = (np.abs(V[:, 0]) < 38.0) & (np.abs(V[:, 1]) < 38.0)
+zmin_sockets = V[in_socket_zone][:, 2].min()
+print(f"lowest plate geometry inside the key field: Z {zmin_sockets:.1f}",
+      check("no floating floors in plate", zmin_sockets >= seat_z - 1e-6))
 
 sec("13. watertight (every build item)")
 wt = True
