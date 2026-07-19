@@ -47,16 +47,16 @@ on a bed-slinger in an evening.
 | 🟦 | **Antigravity** | arch logo | lock jobs to Antigravity |
 | ⬜ | **opencode** | terminal-frame logo | lock jobs to OpenCode |
 | 🟪 | **Kiro** | ghost logo | lock jobs to Kiro |
-
-Every glyph is debossed 0.6 mm **and** ships with a matching legend infill
-piece, so the logos print in a contrast color (white on the colored caps,
-charcoal on the white ones) — no more squinting.
 | ⚡ | Run | `⚡` | kick off the queued job |
 | ✓ | Approve | `✓` | accept a plan / permission prompt |
 | ✕ | Reject | `✕` | decline / cancel |
 | ⟩_ | Prompt | `⟩_` | focus the target session's terminal |
 | 🎤 | **Voice bar (2u)** | `🎤` | **hold to talk** — audio streams to the daemon for speech-to-text |
 | ➤ | Send | `➤` | dispatch to the locked agent at the dialed effort |
+
+Every glyph is debossed 0.6 mm **and** ships with a matching legend infill
+piece, so the logos print in a contrast color (white on the colored caps,
+charcoal on the white ones) — no more squinting.
 
 ## How a job flows
 
@@ -96,6 +96,19 @@ filament (AMS/MMU). Flipped, the legends are the **first 3 layers on the
 bed**, so even a single-extruder printer can do it with one manual filament
 swap at layer 4. No multi-color setup? Print caps alone and paint-fill the
 recesses — they're 0.6 mm deep on purpose.
+
+**Switch sockets — solder like it's a PCB:**
+
+<div align="center">
+<img src="docs/images/plate-underside.png" alt="Plate underside — donor-keyboard-style switch sockets with MX footprint floors" width="640">
+</div>
+
+The plate's underside is a field of donor-keyboard-style socket wells: each
+switch clips into the plate while its body seats on a footprint floor
+(center-post hole + the two slanted contact holes + 5-pin legs). The metal
+pins stick out **2.1 mm** through the back — flow solder on, run your matrix
+wire, done. Printed flipped, the socket floors are ~14 mm internal bridges:
+enable bridging in your slicer; slight sag is invisible and harmless.
 
 Tolerances assume a reasonably tuned printer; every clearance is a named
 constant in [`SPEC.md`](SPEC.md) if yours runs tight.
@@ -162,7 +175,8 @@ cd cad
 - [x] v1 printable enclosure, caps, knob — parametric CAD + audited fit (branch [`v1`](../../tree/v1))
 - [x] v2 logo keycaps (Claude Code · Antigravity · opencode · Kiro · Cursor), taller case for full DevKitC clearance, USB mating relief (branch [`v2`](../../tree/v2))
 - [x] v3 — Grok + Codex keys (seven agents), two-color legend infills (`legends-all.stl`) (branch [`v3`](../../tree/v3))
-- [x] **v4 (current)** — the fat base: 28 mm component bay with a down-firing speaker bay, amp pocket, board bridge with header-pin clearance, dual-USB-C window, and zip-tie wire posts
+- [x] v4 — the fat base: 28 mm component bay with a down-firing speaker bay, amp pocket, board bridge with header-pin clearance, dual-USB-C window, and zip-tie wire posts
+- [x] **v5 (current)** — donor-style switch sockets under the plate: footprint floors, pins protrude 2.1 mm for direct soldering (branch [`v4`](../../tree/v4) holds the socket-less base)
 - [ ] `firmware/` — ESP-IDF: matrix scan, encoder detents, hold-to-talk ring
       buffer, WebSocket client, USB-HID fallback
 - [ ] daemon reference handler + pairing flow

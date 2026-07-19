@@ -103,6 +103,17 @@ Total: **14 MX switches** (13 x 1u + 1 x 2u), 1 EC11 encoder.
   grid positions above (2u voice = one switch centered at X=0, r3). These
   are exactly donor-keyboard-style plate holes — harvested 3-pin white MX
   clones clip straight into the 1.5 plate.
+- **Switch sockets (v5, donor-board style)**: under every cutout, a pocket
+  box cages the switch body — walls 1.6 (outer 17.3 sq) from Z 23.3 up 0.2
+  into the plate, and a **1.2 socket floor** whose top sits at **Z 24.5**
+  (= plate top − 5.0, the MX shoulder→base depth) so the base seats fully
+  while the clips engage the plate. The floor carries the MX footprint:
+  center post Ø4.3 at (0,0), contact pin holes **Ø2.8** at (−3.81, +2.54)
+  and (+2.54, +5.08), 5-pin leg holes Ø2.0 at (±5.08, 0) — offsets from
+  each key center, +Y toward the back. The two metal pins protrude **2.1**
+  below the floor (tips Z 21.2): solder the matrix wires directly to them,
+  PCB-style. The three corner-adjacent sockets are notched by a Ø8.8
+  keep-out around the screw towers (≥0.15 clearance, audited).
 - Knob hole Ø**7.4** at r0c0 (EC11 M7 threaded bush).
 - Skirt: ring 1.15 thick x 6.7 deep (Z 21.5 → 28.2), outer profile =
   87.3 x 87.3 R6.9 x-y, inner 85.0 x 85.0 R6.3 (drops inside the tray's

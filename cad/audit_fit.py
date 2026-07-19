@@ -405,7 +405,33 @@ print(f"  round mic module glue zone (x -27..-13 on the front liner) vs oval bum
       f"{pl.FLOOR + 1.5:.1f} {check('mic module above speaker', d_mod_bump >= 0.5)}")
 
 # ------------------------------------------------------- 12. watertight ----
-sec("12. watertight (every build item)")
+sec("12. v5 switch sockets (donor-style pockets + solder-through floors)")
+seat_z = pl.PLATE_Z1 - part_plate.SOCKET_SEAT_DROP
+floor_z0 = seat_z - part_plate.SOCKET_FLOOR_T
+pin_tip = seat_z - 3.3
+print(f"base seat Z {seat_z:.1f} (plate top {pl.PLATE_Z1} - 5.0)",
+      check("seat at plate_top-5.0", abs(seat_z - (pl.PLATE_Z1 - 5.0)) < 1e-9))
+print(f"pin tips Z {pin_tip:.1f} protrude {floor_z0 - pin_tip:.1f} below the "
+      f"floor ({floor_z0:.1f})",
+      check("pins solder-accessible", floor_z0 - pin_tip >= 1.5))
+print(f"floor bottom {floor_z0:.1f} vs header insulator top {INSUL_TOP:.1f}",
+      check("socket floor clears insulators", floor_z0 - INSUL_TOP >= 1.0))
+ko = part_plate._tower_keepout()
+sock_ok = holes_ok = clear_ok = True
+for k in pl.key_layout():
+    wall, floor = part_plate._socket_shells(k, ko)
+    sock_ok &= (not wall.is_empty) and (not floor.is_empty)
+    for dx, dy in [(0, 0), part_plate.MX_PIN_A, part_plate.MX_PIN_B]:
+        holes_ok &= not floor.contains(Point(k["x"] + dx, k["y"] + dy))
+    for cx, cy in [(sx * pl.BOSS_XY, sy * pl.BOSS_XY)
+                   for sx in (-1, 1) for sy in (-1, 1)]:
+        tower = affinity.translate(pl.circle(part_plate.TOWER_D), cx, cy)
+        clear_ok &= wall.distance(tower) >= 0.15 and floor.distance(tower) >= 0.15
+print("all 14 sockets non-empty:", check("sockets built", sock_ok))
+print("post + contact holes open in every floor:", check("footprint holes", holes_ok))
+print("sockets clear the screw towers (>=0.15):", check("socket-tower", clear_ok))
+
+sec("13. watertight (every build item)")
 wt = True
 for name, mesh, _c in (part_tray.build() + part_plate.build()
                        + part_caps.build() + part_knob.build()):
