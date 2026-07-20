@@ -72,6 +72,30 @@ The pad itself stays dumb on purpose: it emits a tiny JSON protocol
 speech-to-text, session routing, and CLI orchestration. Point it at your own
 stack by implementing one message handler.
 
+## Make it talk — firmware + backend
+
+The hardware above is the enclosure; these two pieces bring it to life. This
+first build is **hold-to-talk over Wi-Fi, no dial** (no potentiometer): press an
+agent key to lock that agent, hold the mic key and speak, hear the agent answer.
+
+```
+[ pad ]  select agent ─▶ POST /select        [ backend on your Mac ]     [ Loom daemon ]
+         hold-to-talk ─▶ POST /voice (PCM) ─▶  STT → agent → TTS  ◀──────▶  handoff + message
+              amp     ◀─ 16 kHz PCM reply   ◀─                             (visible in the thread)
+```
+
+- **[`firmware/`](firmware)** — ESP32-S3 sketch: captive-portal Wi-Fi setup
+  (`LoomPad-Setup`), agent-select keys, hold-to-talk mic streaming, and a telnet
+  debug console. Wiring, key map, and flashing steps in the
+  [firmware README](firmware/README.md).
+- **[`backend/`](backend)** — a zero-dependency Node server that runs on your Mac
+  (Groq STT + LLM, Deepgram TTS) and bridges the pad to the Loom daemon. Two API
+  keys, `npm start`, done — see the [backend README](backend/README.md).
+
+**Bring it up:** `cd backend && cp .env.example .env` (add two keys) → `npm start`
+→ flash the firmware → join `LoomPad-Setup` and enter your Mac's IP → press an
+agent key, hold the mic, talk.
+
 ## Print it
 
 <div align="center">
