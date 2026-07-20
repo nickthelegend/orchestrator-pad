@@ -1,20 +1,23 @@
-"""audit_post_can.py — v4 fat-base probe (read-only): board bay seating, USB
-window aperture, speaker bay, under-plate stack, and the ACCEPTANCE TABLE.
+"""audit_post_can.py — v6 side-USB probe (read-only): reversible board bay
+seating, BOTH side USB apertures, speaker bay, under-plate stack, and the
+ACCEPTANCE TABLE.
 
-Adapted from the v3 post-raise probe; expectations updated for the v4 fat
-base (+10.5 stack shift): tray 28.0 / ledge 21.5 / plate 28.0..29.5 / caps
-35.0 / knob 30.5, the high board bay (shelf + bridge + locator posts at
-BOARD_Z 16.0), the 26-wide USB window (17.0..23.5, through the ledge), the
-down-firing speaker bay and the high mic grille. Mesh-level evidence uses
-generalized-winding point sampling on the actual build() meshes. Exits
-non-zero unless every check passes.
+Expectations for the v6 fat base (+10.5 stack shift): tray 28.0 / ledge
+21.5 / plate 28.0..29.5 / caps 35.0 / knob 30.5, the ROTATED + REVERSIBLE
+board bay (two side-wall shelves + two mid-span ribs + 4 locator posts, all
+seating at BOARD_Z 16.0), the TWO 26-wide USB windows on the side walls
+(Z 17.0..23.5, through the ledge), the down-firing speaker bay and the high
+mic grille. Mesh-level evidence uses generalized-winding point sampling on
+the actual build() meshes. Exits non-zero unless every check passes.
 
-Component data (v4 hardware per SPEC):
-  board: dual-USB-C ESP32-S3 clone, up to 30.0 x 64.0 x 1.6, back edge at
-    Y=+42.0, underside Z 16.0 -> top 17.6; factory header pins DOWN
-    (~8.5 under the PCB); header insulators ON TOP, 2.5 tall -> top 20.1;
-    USB-C shells on TOP at the back edge, 8.94 w x 3.3 h -> Z 17.6..20.9
-    (center 19.25), overhanging the board edge ~1.31
+Component data (v6 hardware per SPEC):
+  board: dual-USB-C ESP32-S3 clone, up to 64.0 (X) x 30.0 (Y) x 1.6, laid
+    ALONG X and installed either way round —
+        ports-right  X -22.0..+42.0        ports-left  X -42.0..+22.0
+    underside Z 16.0 -> top 17.6; factory header pins DOWN (~8.5 under the
+    PCB); header insulators ON TOP, 2.5 tall -> top 20.1; USB-C shells on
+    TOP at the port edge, 8.94 w (in Y) x 3.3 h -> Z 17.6..20.9 (center
+    19.25), overhanging the board edge ~1.31
   plug: overmold hood 12 w x 7 t on the port axis; ~2.5 of exposed shroud
     between hood front and receptacle face when fully mated
   speaker: flange <= 72 x 42 x 1.5 ON the floor; oval driver bump up to
@@ -37,9 +40,9 @@ import part_plate as pp
 import part_knob as pk
 import part_caps as pc
 
-BRD_W, BRD_L, BRD_T = pl.BOARD_W, pl.BOARD_L, 1.6
-BRD_BACK = 42.0
-BRD_FRONT = BRD_BACK - BRD_L                   # -22.0
+BRD_W, BRD_L, BRD_T = pl.BOARD_W, pl.BOARD_L, 1.6   # 30 in Y, 64 in X
+BRD_PORT_X = 42.0                              # port edge (ports-right)
+BRD_FAR_X = BRD_PORT_X - BRD_L                 # -22.0 (far edge, ports-right)
 BRD_TOP = pl.BOARD_Z + BRD_T                   # 17.6
 INSUL_TOP = BRD_TOP + 2.5                      # 20.1
 SHELL_W, SHELL_H = 8.94, 3.3
@@ -57,6 +60,17 @@ FAILURES = []
 def check(name, ok):
     FAILURES.extend([] if ok else [name])
     return "PASS" if ok else "FAIL"
+
+
+def board_rect(sx):
+    """Board footprint for sx=+1 (ports-right) / sx=-1 (ports-left)."""
+    a, b = sx * BRD_PORT_X, sx * BRD_FAR_X
+    return box(min(a, b), -BRD_W / 2, max(a, b), BRD_W / 2)
+
+
+BRD_R, BRD_LF = board_rect(1), board_rect(-1)
+BRD_ANY = BRD_R.union(BRD_LF)                  # x -42..42, |y| <= 15
+ORIENTS = (("ports-right", 1, BRD_R), ("ports-left", -1, BRD_LF))
 
 
 # ------------------------------------------------------------ winding ray ----
@@ -116,81 +130,114 @@ def grid_pts(x0, x1, y0, y1, zs, step=0.7):
 tray_mesh = pt.build()[0][1]
 plate_mesh = pp.build()[0][1]
 
-print("=== A. board bay: drop-in volume, seats, cage ===")
-pts = grid_pts(-BRD_W / 2 + 0.05, BRD_W / 2 - 0.05, BRD_FRONT + 0.05,
-               BRD_BACK - 0.05, (16.05, 16.8, 17.55), 1.1)
+print("=== A. reversible board bay: drop-in volume, seats, cage ===")
+# the board slab volume must be free for BOTH installs -> sample the union
+pts = grid_pts(-BRD_PORT_X + 0.05, BRD_PORT_X - 0.05, -BRD_W / 2 + 0.05,
+               BRD_W / 2 - 0.05, (16.05, 16.8, 17.55), 1.1)
 hit = winding_inside(tray_mesh, pts)
-print(f"  board slab (x ±{BRD_W / 2}, y {BRD_FRONT}..{BRD_BACK}, z 16.05..17.55): "
-      f"{int(hit.sum())}/{len(pts)} samples inside tray "
-      f"{check('board volume free', hit.sum() == 0)}")
-shelf_pts = grid_pts(-pt.SHELF_X + 0.3, pt.SHELF_X - 0.3, pt.SHELF_Y0 + 0.1,
-                     42.55, (15.9,), 0.5)
-bridge_pts = grid_pts(-pt.BRIDGE_X + 0.3, pt.BRIDGE_X - 0.3, pt.BRIDGE_Y0 + 0.1,
-                      pt.BRIDGE_Y1 - 0.1, (15.9,), 0.5)
-hs = winding_inside(tray_mesh, shelf_pts)
-hb = winding_inside(tray_mesh, bridge_pts)
-print(f"  seat material at z 15.9: shelf {int(hs.sum())}/{len(shelf_pts)}, "
-      f"bridge {int(hb.sum())}/{len(bridge_pts)} "
-      f"{check('seats at BOARD_Z', hs.all() and hb.all())}")
-tangent = abs(pt.POST_XY[0][0]) - pt.POST_D / 2
-print(f"  locator posts: inner tangent ±{tangent:.1f} vs board ±{BRD_W / 2} -> "
+print(f"  board slab envelope (x ±{BRD_PORT_X}, y ±{BRD_W / 2}, z 16.05..17.55) "
+      f"— covers ports-right AND ports-left: {int(hit.sum())}/{len(pts)} samples "
+      f"inside tray {check('board volume free', hit.sum() == 0)}")
+seat_ok, seat_n = True, 0
+for sx in (-1, 1):
+    xs = sorted([sx * (pt.SHELF_X0 + 0.1), sx * 42.55])
+    sp = grid_pts(xs[0], xs[1], -pt.SHELF_Y + 0.3, pt.SHELF_Y - 0.3, (15.9,), 0.5)
+    hs = winding_inside(tray_mesh, sp)
+    seat_ok &= bool(hs.all())
+    seat_n += len(sp)
+    print(f"    {'right' if sx > 0 else 'left ':5s} shelf material at z 15.9: "
+          f"{int(hs.sum())}/{len(sp)}")
+rib_ok, rib_n = True, 0
+for x0, x1 in pt.RIB_X:
+    rp = grid_pts(x0 + 0.3, x1 - 0.3, pt.RIB_Y0 + 0.1, pt.RIB_Y1 - 0.1, (15.9,), 0.5)
+    hr = winding_inside(tray_mesh, rp)
+    rib_ok &= bool(hr.all())
+    rib_n += len(rp)
+print(f"    both ribs material at z 15.9 over {rib_n} samples: {rib_ok}")
+print(f"  every seat present at BOARD_Z ({seat_n} shelf + {rib_n} rib samples) "
+      f"{check('seats at BOARD_Z', seat_ok and rib_ok)}")
+tangent = abs(pt.POST_XY[0][1]) - pt.POST_D / 2
+print(f"  locator posts: inner tangent |y| ±{tangent:.1f} vs board ±{BRD_W / 2} -> "
       f"{tangent - BRD_W / 2:.2f}/side; tops {pt.POST_TOP} = board top {BRD_TOP:.1f} "
       f"+ {pt.POST_TOP - BRD_TOP:.1f} "
       f"{check('posts cage board', 0.05 <= tangent - BRD_W / 2 <= 0.3 and pt.POST_TOP - BRD_TOP >= 1.0)}")
-pts = grid_pts(-BRD_W / 2 + 0.05, BRD_W / 2 - 0.05, pt.BRIDGE_Y1 + 0.05,
-               pt.SHELF_Y0 - 0.05, (2.45, 6.0, 9.5, 13.0, 15.95), 1.3)
-hit = winding_inside(tray_mesh, pts)
-print(f"  wiring bay under the board (y {pt.BRIDGE_Y1}..{pt.SHELF_Y0}, floor->16.0 "
-      f"= {pl.BOARD_Z - pl.FLOOR:.1f}): {int(hit.sum())}/{len(pts)} samples inside "
-      f"{check('13.6 wiring bay open', hit.sum() == 0)}")
+for label, sx, rect in ORIENTS:
+    n = sum(1 for x, y in pt.POST_XY if rect.bounds[0] - 0.01 <= x <= rect.bounds[2] + 0.01)
+    print(f"    {label:11s} (x {rect.bounds[0]:+.0f}..{rect.bounds[2]:+.0f}): "
+          f"{n} of the 4 posts cage it {check(f'{label} caged', n >= 3)}")
+# the under-board wiring bay: three clear pockets either side of the ribs
+bay_ok, bay_n, bay_hits = True, 0, 0
+for x0, x1, tag in ((8.0, 39.5, "east"), (-39.5, -8.0, "west"), (-3.5, 3.5, "center")):
+    bp = grid_pts(x0, x1, -14.5, 14.5, (2.45, 6.0, 9.5, 13.0, 15.95), 1.3)
+    hb = winding_inside(tray_mesh, bp)
+    bay_ok &= hb.sum() == 0
+    bay_n += len(bp)
+    bay_hits += int(hb.sum())
+    print(f"    {tag:6s} pocket x {x0:+.1f}..{x1:+.1f}: {int(hb.sum())}/{len(bp)} inside")
+print(f"  wiring bay under the board (floor->16.0 = {pl.BOARD_Z - pl.FLOOR:.1f}): "
+      f"{bay_hits}/{bay_n} samples inside "
+      f"{check('13.6 wiring bay open', bay_ok)}")
 
-print("\n=== B. USB window: aperture, band, plug (mesh + analytics) ===")
-pts = grid_pts(-pt.WIN_W / 2 + 0.05, pt.WIN_W / 2 - 0.05, 42.65, 44.95,
-               (17.05, 18.5, 20.25, 22.0, 23.45), 0.8)
-hit = winding_inside(tray_mesh, pts)
-win_open = hit.sum() == 0
-print(f"  aperture corridor (x ±{pt.WIN_W / 2}, through both wall columns, "
-      f"z 17.05..23.45): {int(hit.sum())}/{len(pts)} samples inside "
-      f"{check('window open through wall', win_open)}")
-edge = np.array([(0, 44.4, 16.95), (0, 44.4, 23.55),
-                 (-13.05, 44.4, 20.25), (13.05, 44.4, 20.25)])
-he = winding_inside(tray_mesh, edge)
-print(f"  wall present just outside the window edges (sill/ceiling/jambs): "
-      f"{int(he.sum())}/4 {check('window edges exact', he.all())}")
+print("\n=== B. USB windows (BOTH side walls): aperture, band, plug ===")
+win_open = True
+for side, sx in (("right", 1), ("left", -1)):
+    xs = sorted([sx * 42.65, sx * 44.95])
+    pts = grid_pts(xs[0], xs[1], -pt.WIN_W / 2 + 0.05, pt.WIN_W / 2 - 0.05,
+                   (17.05, 18.5, 20.25, 22.0, 23.45), 0.8)
+    hit = winding_inside(tray_mesh, pts)
+    win_open &= hit.sum() == 0
+    print(f"  {side.upper():5s} aperture corridor (x {xs[0]:+.2f}..{xs[1]:+.2f}, y "
+          f"±{pt.WIN_W / 2}, through both wall columns, z 17.05..23.45): "
+          f"{int(hit.sum())}/{len(pts)} samples inside "
+          f"{check(f'{side} window open through wall', hit.sum() == 0)}")
+    edge = np.array([(sx * 44.4, 0, 16.95), (sx * 44.4, 0, 23.55),
+                     (sx * 44.4, -13.05, 20.25), (sx * 44.4, 13.05, 20.25)])
+    he = winding_inside(tray_mesh, edge)
+    print(f"        wall present just outside its edges (sill/ceiling/jambs): "
+          f"{int(he.sum())}/4 {check(f'{side} window edges exact', he.all())}")
 shell_z0, shell_z1 = BRD_TOP, BRD_TOP + SHELL_H
 print(f"  shell band z {shell_z0:.1f}..{shell_z1:.1f} (center "
       f"{(shell_z0 + shell_z1) / 2:.2f}) in window {pt.WIN_Z0}..{pt.WIN_Z1}: margins "
       f"{shell_z0 - pt.WIN_Z0:.1f}/{pt.WIN_Z1 - shell_z1:.1f} "
       f"{check('shell inside window band', shell_z0 - pt.WIN_Z0 >= 0.3 and pt.WIN_Z1 - shell_z1 >= 0.3)}")
-recess = pl.CASE_W / 2 - (BRD_BACK + CONN_OVH)
+shell_env = pt.WIN_W / 2 - SHELL_W / 2
+print(f"  shell {SHELL_W} wide (in Y) stays inside the window for port offsets "
+      f"|y| <= {shell_env:.2f} (spec needs 8.5) "
+      f"{check('port offsets |y|<=8.5', shell_env >= 8.5)}")
+recess = pl.CASE_W / 2 - (BRD_PORT_X + CONN_OVH)
 print(f"  hood {HOOD_W:.0f}x{HOOD_H:.0f} vs aperture {pt.WIN_W:.0f}x"
       f"{pt.WIN_Z1 - pt.WIN_Z0:.1f}: width play {(pt.WIN_W - HOOD_W) / 2:.1f}/side "
       f"(port offsets to ±{pt.WIN_W / 2 - HOOD_W / 2:.1f}); receptacle recess "
       f"{recess:.2f} <= {SHROUD_EXPOSED} exposed shroud -> mates at the mouth "
       f"{check('plug hood passes aperture', HOOD_W <= pt.WIN_W - 2 and recess <= SHROUD_EXPOSED)}")
-sk = grid_pts(-pt.WIN_W / 2 + 0.05, pt.WIN_W / 2 - 0.05, 42.55, 43.6,
-              (21.55, 23.4, 25.5, 27.9), 0.8)   # ledge..under the plate slab
-hp = winding_inside(plate_mesh, sk)
-print(f"  plate-skirt material in the window corridor (ledge..plate slab): "
-      f"{int(hp.sum())}/{len(sk)} samples "
-      f"{check('back skirt notch clears window', hp.sum() == 0)}")
+print(f"  the window on the unused side is an identical wire pass-through")
+skirt_ok = True
+for side, sx in (("right", 1), ("left", -1)):
+    xs = sorted([sx * 42.55, sx * 43.6])
+    sk = grid_pts(xs[0], xs[1], -pt.WIN_W / 2 + 0.05, pt.WIN_W / 2 - 0.05,
+                  (21.55, 23.4, 25.5, 27.9), 0.8)   # ledge..under the plate slab
+    hp = winding_inside(plate_mesh, sk)
+    skirt_ok &= hp.sum() == 0
+    print(f"  plate-skirt material in the {side} window corridor (ledge..plate slab): "
+          f"{int(hp.sum())}/{len(sk)} samples "
+          f"{check(f'{side} skirt notch clears window', hp.sum() == 0)}")
 
 print("\n=== C. under-plate stack over the bay ===")
-board_rect = box(-BRD_W / 2, BRD_FRONT, BRD_W / 2, BRD_BACK)
-strips = unary_union([box(BRD_W / 2 - 2.5, BRD_FRONT, BRD_W / 2, BRD_BACK),
-                      box(-BRD_W / 2, BRD_FRONT, -BRD_W / 2 + 2.5, BRD_BACK)])
+# headers run along the board's LONG edges — after the 90° turn, y = ±15
+strips = unary_union([box(-BRD_PORT_X, BRD_W / 2 - 2.5, BRD_PORT_X, BRD_W / 2),
+                      box(-BRD_PORT_X, -BRD_W / 2, BRD_PORT_X, -BRD_W / 2 + 2.5)])
 over_b, over_s = [], []
 for k in pl.key_layout():
     post = Point(k["x"], k["y"]).buffer(2.0, quad_segs=16)
     pins = [Point(k["x"] - 3.81, k["y"] + 2.54), Point(k["x"] + 2.54, k["y"] + 5.08)]
-    if unary_union([post] + pins).intersects(board_rect):
+    if unary_union([post] + pins).intersects(BRD_ANY):
         over_b.append(k["id"])
     if any(strips.contains(p) for p in pins) or post.intersects(strips):
         over_s.append(k["id"])
 clr_ins = PIN_TIP - INSUL_TOP
 print(f"  switch lowest Z {PIN_TIP:.1f}; housings {HOUS_BOT:.1f}; board top "
       f"{BRD_TOP:.1f}; insulator top {INSUL_TOP:.1f}")
-print(f"  keys over board {over_b}; over insulator strips {over_s}")
+print(f"  keys over board (either orientation) {over_b}; over insulator strips {over_s}")
 print(f"  pins vs insulators: {clr_ins:+.1f} (need >= 0.8) "
       f"{check('pins vs insulators', clr_ins >= 0.8)}")
 print(f"  pins vs bare board: {PIN_TIP - BRD_TOP:+.1f} "
@@ -199,9 +246,9 @@ print(f"  housings vs insulators: {HOUS_BOT - INSUL_TOP:+.1f} "
       f"{check('housings vs insulators', HOUS_BOT - INSUL_TOP >= 0.5)}")
 ec_bot = pl.PLATE_Z0 - 7.0
 ec_body = affinity.translate(box(-6.0, -6.0, 6.0, 6.0), *pl.KNOB_POS)
-d_ec = ec_body.distance(board_rect)
-print(f"  EC11 body (12 sq, bottom Z {ec_bot:.1f}) at x {pl.KNOB_POS[0]:.2f}: "
-      f"lateral gap to board {d_ec:.2f} "
+d_ec = ec_body.distance(BRD_ANY)
+print(f"  EC11 body (12 sq, bottom Z {ec_bot:.1f}) at {pl.KNOB_POS[0]:.2f},"
+      f"{pl.KNOB_POS[1]:.2f}: lateral gap to the board (either orientation) {d_ec:.2f} "
       f"{check('EC11 body clear of board', d_ec >= 0.5 or ec_bot - BRD_TOP >= 0.5)}")
 
 print("\n=== D. speaker bay: grille, pilots, bump (mesh + analytics) ===")
@@ -233,24 +280,68 @@ print(f"  bump top {BUMP_TOP:.1f} vs board underside {pl.BOARD_Z:.1f}: "
       f"{pl.BOARD_Z - BUMP_TOP:+.1f} (need >= 1.0) "
       f"{check('bump vs board underside', pl.BOARD_Z - BUMP_TOP >= 1.0)}")
 bump = affinity.translate(affinity.scale(pl.circle(2.0), 25.0, 20.0), *pl.SPK_CENTER)
-bridge2d = box(-pt.BRIDGE_X, pt.BRIDGE_Y0, pt.BRIDGE_X, pt.BRIDGE_Y1)
-print(f"  oval bump (<=50x40) vs bridge wall: plan gap {bump.distance(bridge2d):.1f} "
-      f"{check('bump clears bridge', bump.distance(bridge2d) >= 2.0)}")
+ribs2d = unary_union([box(x0, pt.RIB_Y0, x1, pt.RIB_Y1) for x0, x1 in pt.RIB_X])
+posts2d = unary_union([Point(x, y).buffer(pt.POST_D / 2) for x, y in pt.POST_XY])
+wposts2d = unary_union([Point(x, y).buffer(pt.WPOST_D / 2) for x, y in pt.WPOST_XY])
+ridges2d = pt.amp_ridges()
+shelves2d = unary_union([box(min(sx * pt.SHELF_X0, sx * pt.SHELF_X1), -pt.SHELF_Y,
+                             max(sx * pt.SHELF_X0, sx * pt.SHELF_X1), pt.SHELF_Y)
+                         for sx in (-1, 1)])
+print(f"  oval bump (<=50x40) vs mid-span ribs: plan gap {bump.distance(ribs2d):.2f} "
+      f"{check('bump clears ribs', bump.distance(ribs2d) >= 2.0)}")
+# v6: NO bay feature may land inside the speaker flange footprint. The
+# locator posts deliberately graze it at 0.5 (they sit at |x| = 39 for that
+# reason), so the bar is "no overlap, >= 0.4 clear", each clearance printed.
+FLANGE_MIN = 0.4
+flange2d = box(-pl.SPK_FLANGE[0] / 2, pl.SPK_CENTER[1] - pl.SPK_FLANGE[1] / 2,
+               pl.SPK_FLANGE[0] / 2, pl.SPK_CENTER[1] + pl.SPK_FLANGE[1] / 2)
+flange_ok = True
+print(f"  flange footprint x ±{pl.SPK_FLANGE[0] / 2:.0f}, y {flange2d.bounds[1]:.0f}.."
+      f"{flange2d.bounds[3]:.0f} — bay features must stay out (>= {FLANGE_MIN}):")
+for fname, geom in (("mid-span ribs", ribs2d), ("locator posts", posts2d),
+                    ("amp ridges", ridges2d), ("wire posts", wposts2d),
+                    ("board shelves", shelves2d)):
+    ov, d = geom.intersection(flange2d).area, geom.distance(flange2d)
+    flange_ok &= ov < 1e-6 and d >= FLANGE_MIN
+    print(f"    {fname:15s} overlap {ov:.3f} mm^2, clearance {d:.2f}")
+print(f"  no bay feature intersects the speaker flange "
+      f"{check('bay features clear the flange', flange_ok)}")
 tip_below = 6.0 - 1.5 - pl.FLOOR
 print(f"  M2.5x6 tips {tip_below:.1f} under the floor; >=3mm feet stand the case "
       f"{3.0 - pt.FEET_DEPTH:.1f} off the desk -> {3.0 - pt.FEET_DEPTH - tip_below:.1f} "
       f"ground clearance {check('screw tips in foot gap', 3.0 - pt.FEET_DEPTH - tip_below >= 0.2)}")
 
 print("\n=== E. amp pocket / wire posts / mic grille (mesh) ===")
-pk_pts = grid_pts(pt.AMP_C[0] - 9.95, pt.AMP_C[0] + 9.95, pt.AMP_C[1] - 9.95,
+# The (20, 17.6) locator post clips the pocket's south edge (it rises to
+# y 20.1). Sample the pocket interior OUTSIDE the post keep-out, then prove
+# the post-free sub-rectangle still swallows an 18 x 16 breakout.
+post_ko = unary_union([Point(x, y).buffer(pt.POST_D / 2 + 0.25) for x, y in pt.POST_XY])
+pk_all = grid_pts(pt.AMP_C[0] - 9.95, pt.AMP_C[0] + 9.95, pt.AMP_C[1] - 9.95,
                   pt.AMP_C[1] + 9.95, (2.45, 3.3, 4.35), 1.0)
+pk_pts = np.array([p for p in pk_all if not post_ko.intersects(Point(p[0], p[1]))])
 hpk = winding_inside(tray_mesh, pk_pts)
-ridge_pts = np.array([(41.7, 24.7, 3.3), (41.7, 3.3, 3.3),
-                      (20.3, 24.7, 3.3), (20.3, 3.3, 3.3)])
+rr = pt.AMP_POCKET / 2 + pt.AMP_RIDGE_W / 2                 # 10.75 — ridge mid
+ridge_pts = np.array([(pt.AMP_C[0] + sx * rr, pt.AMP_C[1] + sy * rr, 3.3)
+                      for sx in (-1, 1) for sy in (-1, 1)])
 hr = winding_inside(tray_mesh, ridge_pts)
-print(f"  20x20 pocket interior free above the floor: {int(hpk.sum())}/{len(pk_pts)}; "
-      f"corner ridges present {int(hr.sum())}/4 "
-      f"{check('amp pocket', hpk.sum() == 0 and hr.all())}")
+print(f"  20x20 pocket at {pt.AMP_C} interior free above the floor "
+      f"(post keep-out excluded): {int(hpk.sum())}/{len(pk_pts)}; corner ridges "
+      f"present {int(hr.sum())}/4 {check('amp pocket', hpk.sum() == 0 and hr.all())}")
+pocket_box = box(pt.AMP_C[0] - 10, pt.AMP_C[1] - 10,
+                 pt.AMP_C[0] + 10, pt.AMP_C[1] + 10)
+intruders = [(x, y) for x, y in pt.POST_XY
+             if Point(x, y).buffer(pt.POST_D / 2).intersects(pocket_box)]
+y_clear = max([y + pt.POST_D / 2 for x, y in intruders], default=pt.AMP_C[1] - 10)
+usable_w, usable_h = 20.0, (pt.AMP_C[1] + 10) - y_clear
+print(f"    locator post(s) {intruders} intrude to y {y_clear:.1f} -> post-free "
+      f"pocket rect {usable_w:.0f} x {usable_h:.1f} (y {y_clear:.1f}.."
+      f"{pt.AMP_C[1] + 10:.0f}); MAX98357A breakout ~18 x 16 fits "
+      f"{check('amp module fits post-free rect', usable_w >= 18.0 and usable_h >= 16.0)}")
+for label, sx, rect in ORIENTS:
+    ov, d = ridges2d.intersection(rect).area, ridges2d.distance(rect)
+    print(f"    amp ridges vs {label:11s} board footprint: overlap {ov:.3f} mm^2, "
+          f"clearance {d:.2f} "
+          f"{check(f'amp not under board ({label})', ov < 1e-6 and d >= 0.4)}")
 wp_ok = True
 for x, y in pt.WPOST_XY:
     open_pts = np.array([(x, y, 4.0), (x + 2.0, y, 4.0), (x - 2.0, y, 4.0)])
@@ -260,8 +351,18 @@ for x, y in pt.WPOST_XY:
     wp_ok &= winding_inside(tray_mesh, solid_pts).all()
 top_pts = np.array([(x, y, 10.5) for x, y in pt.WPOST_XY])
 wp_ok &= not winding_inside(tray_mesh, top_pts).any()
-print(f"  wire posts: zip-tie notches open through, slivers + shaft solid, "
-      f"tops at {pl.FLOOR + pt.WPOST_H:.1f} {check('wire posts', wp_ok)}")
+print(f"  wire posts at {pt.WPOST_XY}: zip-tie notches open through, slivers + "
+      f"shaft solid, tops at {pl.FLOOR + pt.WPOST_H:.1f} {check('wire posts', wp_ok)}")
+left_corr = box(-46.0, -pt.WIN_W / 2, -40.0, pt.WIN_W / 2)
+for label, sx, rect in ORIENTS:
+    ov, d = wposts2d.intersection(rect).area, wposts2d.distance(rect)
+    print(f"    wire posts vs {label:11s} board footprint: overlap {ov:.3f} mm^2, "
+          f"clearance {d:.2f} "
+          f"{check(f'wire posts not under board ({label})', ov < 1e-6 and d >= 2.0)}")
+print(f"    wire posts vs the LEFT window corridor (y ±{pt.WIN_W / 2:.0f}): "
+      f"{wposts2d.distance(left_corr):.2f}; vs the (-39,+39) boss: "
+      f"{wposts2d.distance(Point(-39, 39).buffer(pt.BOSS_D / 2)):.2f} "
+      f"{check('wire posts clear window + boss', wposts2d.distance(left_corr) >= 2.0 and wposts2d.distance(Point(-39, 39).buffer(pt.BOSS_D / 2)) >= 0.5)}")
 mic_ok = True
 for x in pt.MIC_XS:
     open_pts = np.array([(x, -44.4, 20.15), (x, -42.75, 20.15), (x, -44.9, 20.15)])
@@ -329,7 +430,7 @@ print(f"  tray + plate + 14 caps (+legends) + knob watertight: "
 # ---------------------------------------------------------------- table ----
 W = 66
 print("\n" + "=" * (W + 10))
-print("ACCEPTANCE TABLE (v4 fat base)")
+print("ACCEPTANCE TABLE (v6 side USB — reversible board bay)")
 print("=" * (W + 10))
 rows = [
     (f"switch lowest Z {PIN_TIP:.1f} vs header insulator top {INSUL_TOP:.1f} "
@@ -337,18 +438,32 @@ rows = [
     (f"speaker bump top {BUMP_TOP:.1f} vs board underside {pl.BOARD_Z:.1f} "
      f"(clr {pl.BOARD_Z - BUMP_TOP:.1f}, need >=1.0)",
      pl.BOARD_Z - BUMP_TOP >= 1.0),
-    (f"USB window 26x6.5 @ Z {pt.WIN_Z0}..{pt.WIN_Z1}: aperture open, shell "
-     f"band inside, hood mates (recess {recess:.2f})",
+    (f"USB windows 26x6.5 @ Z {pt.WIN_Z0}..{pt.WIN_Z1} on BOTH side walls: both "
+     f"apertures open, shell band inside, hood mates (recess {recess:.2f})",
      win_open and shell_z0 - pt.WIN_Z0 >= 0.3 and recess <= SHROUD_EXPOSED),
-    (f"board bay: slab free, seats @16.0, posts cage {tangent - BRD_W / 2:.2f}/side, "
-     f"13.6 wiring bay open",
+    (f"reversible bay: slab free x ±{BRD_PORT_X:.0f}, dual shelves + 2 ribs seat "
+     f"@16.0, posts cage {tangent - BRD_W / 2:.2f}/side, 13.6 wiring bay open",
      not [f for f in FAILURES if f in (
          'board volume free', 'seats at BOARD_Z', 'posts cage board',
-         '13.6 wiring bay open')]),
+         '13.6 wiring bay open', 'ports-right caged', 'ports-left caged')]),
+    ("board installs ports-right (x -22..+42) OR ports-left (x -42..+22); the "
+     "unused side window is a wire pass-through",
+     not [f for f in FAILURES if f in (
+         'right window open through wall', 'left window open through wall',
+         'right window edges exact', 'left window edges exact')]),
     (f"skirt ∩ bosses {inter:.2f} mm^2 (gap {gap_boss:.2f}); lateral {lat:.2f}/side; "
-     f"back notch clears the window band",
+     f"BOTH side notches clear their window band",
      inter < 0.01 and gap_boss >= 0.3 and 0.10 <= lat <= 0.25
-     and 'back skirt notch clears window' not in FAILURES),
+     and not [f for f in FAILURES if f in (
+         'right skirt notch clears window', 'left skirt notch clears window')]),
+    (f"no bay feature intersects the speaker flange (x ±36, y -42..0); tightest "
+     f"is the locator post pair at |x|=39 with 0.50 clear", flange_ok),
+    (f"amp pocket @ {pt.AMP_C} + wire posts @ {pt.WPOST_XY[0]}/{pt.WPOST_XY[1]} sit "
+     f"clear of the board footprint in BOTH orientations",
+     not [f for f in FAILURES if f.startswith(('amp not under board',
+                                               'wire posts not under board'))
+          or f in ('wire posts clear window + boss',
+                   'amp module fits post-free rect')]),
     (f"M3x8 stack: head {head_z:.1f} / tip {tip_z:.1f} / bore floor {floor_z:.1f} "
      f"(margin {tip_z - floor_z:+.1f}, insert top {pt.BOSS_TOP:.1f})",
      tip_z >= floor_z and tip_z <= pt.BOSS_TOP - 3),

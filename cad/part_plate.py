@@ -13,13 +13,14 @@ One printable part, built as a union of individually-watertight shells
     is notched so the case can close and USB can mate:
       - Ø8.6 corner clearances at (±39, ±39) around the tray bosses (Ø7.0
         rises to Z 25.5, straight through the skirt band; 0.8 radial gap)
-      - ONE back notch x -14..+14 (full skirt depth): the tray's USB window
-        (26 wide, Z 17.0..23.5) crosses the 21.5 ledge, so its upper band
-        runs through the skirt seat — the notch opens the whole corridor
-        for the window and the plug hood
+      - TWO side notches y -14..+14 (full skirt depth), at x 41..44 and
+        x -44..-41: the tray's v6 USB windows (26 wide, Z 17.0..23.5) sit on
+        BOTH side walls and cross the 21.5 ledge, so each upper band runs
+        through the skirt seat — the notches open the whole corridor for the
+        aperture and the plug hood, on whichever side the ports face
     the remaining segments each still fuse to plate band A via the 0.2 lap.
-    (v3's separate USB/UART and front mic notches are gone: the v4 mic
-    grille sits at Z 19.4..20.9, fully below the ledge.)
+    (v3's separate USB/UART and front mic notches are gone: the mic grille
+    sits at Z 19.4..20.9, fully below the ledge.)
   * 4 screw towers Ø7.6/Ø3.4 at (±39, ±39), Z 25.5..28.2
     (towers land on the tray bosses; 0.2 into the plate slab)
 
@@ -35,7 +36,7 @@ from shapely.geometry import box
 from shapely.ops import unary_union
 
 import partlib as pl
-import part_tray                    # single source of truth for the USB slot X
+import part_tray                    # single source of truth for the USB windows
 
 # ---- local parameters (SPEC "Top plate" / kernel overlap rule) ------------
 
@@ -49,10 +50,14 @@ SKIRT_OUT_W, SKIRT_OUT_R = 87.3, 6.9    # skirt outer profile (rr) — 0.15 per
 SKIRT_IN_W, SKIRT_IN_R = 85.0, 6.3      # skirt inner profile (1.15 wall)
 BOSS_CLEAR_D = 8.6                  # skirt corner notch around the Ø7.0 tray
                                     # bosses (0.8 radial clearance)
-USB_NOTCH_X0, USB_NOTCH_X1 = -14.0, 14.0    # back notch: the tray's 26-wide
-                                    # USB window (Z 17.0..23.5) crosses the
-                                    # 21.5 ledge into the skirt band
-USB_NOTCH_Y0, USB_NOTCH_Y1 = 41.0, 44.0     # full skirt band (y 42.5..43.65)
+USB_NOTCH_Y0, USB_NOTCH_Y1 = -14.0, 14.0    # v6: TWO side notches. The tray's
+                                    # 26-wide USB windows (Z 17.0..23.5) now
+                                    # sit on BOTH side walls, spanning y ±13;
+                                    # their upper band crosses the 21.5 ledge
+                                    # into the skirt band, so each needs a
+                                    # notch (1.0 margin per side)
+USB_NOTCH_X0, USB_NOTCH_X1 = 41.0, 44.0     # full skirt band (x 42.5..43.65),
+                                    # mirrored to -44.0..-41.0 on the left
 TOWER_D = 7.6                       # screw tower outer diameter
 TOWER_Z0 = part_tray.BOSS_TOP       # tray corner-boss top (25.5, SPEC "Tray")
 
@@ -103,24 +108,27 @@ def _plate_profile(corner_hole_d):
 
 
 def _skirt_profile():
-    """Skirt ring minus the tray-boss corner clearances and the back (USB
-    window) notch.
+    """Skirt ring minus the tray-boss corner clearances and the TWO side
+    (USB window) notches.
 
     The Ø7.0 tray bosses rise to Z 25.5 straight through the skirt band
     (their reach past the shared corner-arc center exceeds even the skirt's
-    outer radius), and the back band would stand over the USB window's
+    outer radius), and each side band would stand over its USB window's
     upper band (the window top 23.5 crosses the 21.5 ledge) — the notches
-    are mandatory for the case to close / the plug to mate. The cuts split
-    the ring into segments; every segment still spans the full skirt
-    height, so each stays a watertight prism fused to plate band A by the
-    0.2 overlap.
+    are mandatory for the case to close / the plug to mate, on whichever
+    side the board's ports face. The cuts split the ring into segments;
+    every segment still spans the full skirt height, so each stays a
+    watertight prism fused to plate band A by the 0.2 overlap.
     """
     skirt = pl.ring2d(pl.rounded_rect(SKIRT_OUT_W, SKIRT_OUT_W, SKIRT_OUT_R),
                       pl.rounded_rect(SKIRT_IN_W, SKIRT_IN_W, SKIRT_IN_R))
     boss_clear = unary_union([_at(pl.circle(BOSS_CLEAR_D), x, y)
                               for x, y in _screw_centers()])
-    usb_notch = box(USB_NOTCH_X0, USB_NOTCH_Y0, USB_NOTCH_X1, USB_NOTCH_Y1)
-    return skirt.difference(boss_clear).difference(usb_notch)
+    usb_notches = unary_union([
+        box(USB_NOTCH_X0, USB_NOTCH_Y0, USB_NOTCH_X1, USB_NOTCH_Y1),    # RIGHT
+        box(-USB_NOTCH_X1, USB_NOTCH_Y0, -USB_NOTCH_X0, USB_NOTCH_Y1),  # LEFT
+    ])
+    return skirt.difference(boss_clear).difference(usb_notches)
 
 
 def _tower_keepout():

@@ -1,11 +1,17 @@
-"""part_tray.py — Orchestrator Pad bottom shell (tray, v4 "fat base"), in
+"""part_tray.py — Orchestrator Pad bottom shell (tray, v6 "side USB"), in
 world position per SPEC.
 
 The interior is a component bay: the dual-USB-C ESP32-S3 clone board rides
 high (underside at Z=16.0, factory header pins DOWN into the bay), a
-down-firing cavity speaker sits flange-on-floor under the board's front
-half, the MAX98357A amp drops into a ridge-framed pocket, and jumper-wire
-bundles tie to notched posts along the west wall.
+down-firing cavity speaker sits flange-on-floor under the board's south
+half, the MAX98357A amp drops into a ridge-framed pocket on the back strip,
+and jumper-wire bundles tie to notched posts along the west wall.
+
+v6 turns the board 90°: it now runs ALONG X (30 wide in Y, up to 64 long in
+X) with its USB-C ports facing a SIDE wall, and the bay is REVERSIBLE — the
+board installs ports-right (X -22..+42) or ports-left (X -42..+22). Both
+side walls carry an identical USB window; the unused one is a wire
+pass-through.
 
 One printable part = a union of individually-watertight prism shells that
 overlap by OVL = 0.2 mm in Z (or radially) wherever they stack (the slicer
@@ -14,7 +20,7 @@ fuses them):
   floor    two slabs; the lower one carries the 4 feet-recess holes; BOTH
            carry the speaker grille slots and the 4 M2.5 pilot holes.
   walls    TWO concentric columns, each split into Z bands (band-split
-           trick) so the USB window and the mic ports keep their exact spec
+           trick) so the USB windows and the mic ports keep their exact spec
            edges: a band that carries a wall opening is stretched 0.2 into
            its solid neighbours (its cut runs the band's full height) while
            the solid neighbour ends exactly at the opening edge — the
@@ -23,17 +29,23 @@ fuses them):
              liner column: the inner 1.2 (thick-wall remainder), floor to
              the ledge at Z=21.5; laps 0.2 radially into the outer column
              so the two columns fuse. Its top cap IS the ledge face. (The
-             USB window 17.0..23.5 crosses the ledge: through the liner the
+             USB windows 17.0..23.5 cross the ledge: through the liner the
              opening ceiling coincides with the ledge plane; the outer skin
              keeps the exact 17.0/23.5 edges. The plate skirt is notched
-             over the window's upper band.)
+             over both windows' upper band.) The two side cuts split each
+             cut band's annulus into a back arc and a front arc — every
+             piece is still its own watertight prism, fused to the solid
+             ring bands above and below by the 0.2 lap.
   bosses   4 corner screw bosses: solid pedestal + insert-bore ring.
-  shelf    back board shelf (tab off the back wall): board back edge seats
-           on its Z=16.0 top face.
-  bridge   front bridge wall from the floor to Z=16.0: mid-span support
-           between the speaker bay and the wiring bay.
-  posts    4 Ø5 locator posts caging the board laterally (tops Z 19.0).
-  amp      four L-corner ridges framing the MAX98357A pocket (foam-tape).
+  shelves  TWO side-wall board shelves (tabs off the right and left walls),
+           mirror images about X=0: whichever way the board goes in, its
+           port edge lands on one and its far edge on the other. Both top
+           faces are the Z=16.0 seating plane.
+  ribs     two mid-span rib walls from the floor to Z=16.0, north of the
+           speaker flange (Y >= +1.0) — they carry the board's middle.
+  posts    4 Ø5 locator posts caging the board in Y (tops Z 19.0).
+  amp      four L-corner ridges framing the MAX98357A pocket (foam-tape),
+           on the back strip clear of both board orientations.
   wire     two Ø5 zip-tie posts with through-notches (band-split in Z).
 """
 from __future__ import annotations
@@ -58,11 +70,13 @@ FEET_XY = 36.0                             # feet-recess centers (+-36, +-36)
 FEET_D = 9.0                               # recess diameter
 FEET_DEPTH = 0.6                           # recess depth into the bottom face
 
-# USB window, back wall (Y=+45): both board-top USB-C ports exit here. Wide
-# and tall enough that the exact port offsets of any clone don't matter and
-# a plug hood fits inside the aperture (supersedes the v3 X=+7.79 slot and
-# the UART relief pocket).
-WIN_W, WIN_Z0, WIN_Z1 = pl.USB_WIN         # 26.0 wide, centered X=0, Z 17.0..23.5
+# USB windows, BOTH side walls (X=+45 and X=-45): identical 26.0-wide (in Y,
+# centered Y=0) apertures at Z 17.0..23.5. The board's two board-top USB-C
+# ports exit through whichever side it is installed against; the opposite
+# window is a wire pass-through. Wide and tall enough that the exact port
+# offsets of any clone don't matter and a plug hood fits inside the
+# aperture.
+WIN_W, WIN_Z0, WIN_Z1 = pl.USB_WIN         # 26.0 wide, centered Y=0, Z 17.0..23.5
 
 # Mic grille, front wall (Y=-45): 3 square ports, fully below the ledge.
 # The round I2S mic module glues behind them, above the speaker body
@@ -76,23 +90,35 @@ BORE_D = 4.0                               # M3 heat-set insert bore
 BOSS_SOLID_TOP = 19.5                      # solid pedestal 2.2..19.5 (bore floor)
 BOSS_TOP = 25.5                            # bore ring 19.3..25.5 (bore 6.0 deep)
 
-# Board bay: board components-UP, header pins DOWN, centered X=0, back edge
-# at Y=+42.0, up to BOARD_W x BOARD_L (30 x 64). Underside seats at BOARD_Z
-# = 16.0 on the back shelf + front bridge; the locator posts cage it
-# laterally (0.1 clearance per side to a 30-wide board). Under-board
-# clearance floor->16.0 = 13.6 for the factory header pins + angled dupont
-# connectors.
-SHELF_X = 14.0                             # back shelf |x| <= 14
-SHELF_Y0 = HALF - pl.WALL - 1.6            # 41.0 — tab protrudes 1.6 from the
-SHELF_Y1 = HALF - pl.WALL + OVL            # 42.8 —  wall inner face (0.2 lap)
+# Board bay (v6, ROTATED + REVERSIBLE): board components-UP, header pins
+# DOWN, running along X — BOARD_W (30) wide in Y (|y| <= 15), up to BOARD_L
+# (64) long in X. It installs against EITHER side wall:
+#     ports-right   X -22.0 .. +42.0   (USB-C exits the X=+45 window)
+#     ports-left    X -42.0 .. +22.0   (USB-C exits the X=-45 window)
+# Every feature of the bay is mirror-symmetric about X=0, so both
+# orientations seat identically. The underside sits at BOARD_Z = 16.0 on the
+# two side-wall shelves + the two mid-span ribs; the locator posts cage it
+# in Y (0.1 clearance per side to a 30-wide board). Under-board clearance
+# floor->16.0 = 13.6 for the factory header pins + angled dupont connectors.
+SHELF_Y = 14.0                             # both shelf tabs span |y| <= 14
+SHELF_X0 = HALF - pl.WALL - 1.6            # 41.0 — tab protrudes 1.6 from the
+SHELF_X1 = HALF - pl.WALL + OVL            # 42.8 —  wall inner face (0.2 lap)
 SHELF_Z0 = 13.5                            # shelf body 13.5..16.0
 
-BRIDGE_X = 16.0                            # front bridge wall |x| <= 16
-BRIDGE_Y0, BRIDGE_Y1 = 4.0, 7.0            # 3.0 thick, floor..16.0
+# Mid-span ribs (they replace v5's single front bridge): two rib walls under
+# the board's middle, floor..BOARD_Z. RIB_Y0 MUST stay >= +1.0 — the speaker
+# flange occupies X ±36, Y -42..0, and a rib crossing that footprint would
+# collide with the flange.
+RIB_X = ((4.0, 7.0), (-7.0, -4.0))         # two 3.0-thick ribs, mirrored
+RIB_Y0, RIB_Y1 = 1.0, 16.0                 # 15.0 long, 1.0 clear of the flange
 
 POST_D = 5.0                               # Ø5 locator posts, tops Z 19.0
 POST_TOP = 19.0
-POST_XY = ((-17.6, 40.0), (17.6, 40.0), (-17.6, 5.5), (17.6, 5.5))
+# Inner faces at |y| = 17.6 - 2.5 = 15.1 -> 0.1 clearance per side to a
+# 30-wide board. The two Y-negative posts sit at |x| = 39 so they clear the
+# speaker flange edge at X = ±36 by 0.5; each board orientation is caged by
+# three of the four (two north, one south).
+POST_XY = ((20.0, 17.6), (-20.0, 17.6), (39.0, -17.6), (-39.0, -17.6))
 
 # Speaker bay (down-firing, flange ON the floor, centered SPK_CENTER):
 # racetrack floor opening with two grille bars -> 3 slots; 4 M2.5
@@ -107,9 +133,12 @@ SPK_PILOT_D = 2.4                          # M2.5 pilot holes, through the floor
 SPK_PILOT_XY = tuple((sx * 31.5, y)        # 63 x 33 hole pattern @ (0,-21)
                      for sx in (-1, 1) for y in (-37.5, -4.5))
 
-# Amp pocket: four L-corner ridges framing a square pocket east of the
-# board — the MAX98357A drops in, foam-tape mounted.
-AMP_C = (31.0, 14.0)                       # pocket center
+# Amp pocket: four L-corner ridges framing a square pocket on the BACK strip
+# — the MAX98357A drops in, foam-tape mounted. The rotated board covers
+# X -42..+42 over |y| <= 15 across the two orientations, so the pocket moved
+# north out from under it: ridge outer edge reaches Y 15.5 vs the board edge
+# at 15.0 (0.5 clear) and X 33.5 vs the corner bosses' inner face at 35.5.
+AMP_C = (22.0, 27.0)                       # pocket center
 AMP_POCKET = 20.0                          # pocket clear width (square)
 AMP_RIDGE_W = 1.5                          # ridge width
 AMP_RIDGE_H = 2.0                          # ridge height above the floor
@@ -117,9 +146,12 @@ AMP_RIDGE_L = 6.0                          # leg length from each outer corner
 
 # Wire posts (west wiring channel): Ø5 x 8.0 tall, each with a zip-tie
 # through-notch (open along X so a tie wraps a bundle running along Y).
+# v6: pushed north-east out from under the rotated board (Y >= 17.5 vs the
+# board edge at 15.0) and out of the LEFT window corridor (the window spans
+# Y ±13), while still clearing the (-39, +39) corner boss.
 WPOST_D = 5.0
 WPOST_H = 8.0                              # above the floor top -> Z 10.4
-WPOST_XY = ((-34.0, 12.0), (-34.0, 30.0))
+WPOST_XY = ((-30.0, 20.0), (-30.0, 34.0))
 NOTCH_W = 3.2                              # notch width (Y) for the tie
 NOTCH_Z0, NOTCH_Z1 = 3.0, 5.0              # notch band (2.0 tall)
 
@@ -130,6 +162,18 @@ CUT_IN, CUT_OUT = HALF - 4.0, HALF + 1.0   # 41 .. 46
 def _rr(w, r):
     """Square rounded-rect profile centered at origin."""
     return pl.rounded_rect(w, w, r)
+
+
+def win_cutter():
+    """The v6 USB wall cutter: BOTH side windows at once (RIGHT wall X=+45
+    and LEFT wall X=-45), each WIN_W wide in Y centered Y=0, reaching from
+    inside the liner to past the outer skin. Mirror-symmetric about X=0 —
+    the board installs ports-right OR ports-left and the unused window
+    serves as a wire pass-through. Subtracted in the Z 17.0..23.5 bands."""
+    return unary_union([
+        box(CUT_IN, -WIN_W / 2, CUT_OUT, WIN_W / 2),          # RIGHT wall X=+45
+        box(-CUT_OUT, -WIN_W / 2, -CUT_IN, WIN_W / 2),        # LEFT  wall X=-45
+    ])
 
 
 def spk_floor_opening():
@@ -178,8 +222,10 @@ def build():
                                pl.CASE_R - SKIRT_WALL + OVL),
                            _rr(pl.CASE_W - 2 * pl.WALL, pl.CASE_R - pl.WALL))
 
-    # wall-opening cutters (2D), reaching fully through both columns
-    win = box(-WIN_W / 2, CUT_IN, WIN_W / 2, CUT_OUT)         # Z 17.0..23.5
+    # wall-opening cutters (2D), reaching fully through both columns.
+    # v6: the USB cutter is BOTH side windows at once — same width, same Y
+    # centering, same Z band; the unused one is a wire pass-through.
+    win = win_cutter()                                        # Z 17.0..23.5
     mics = unary_union([box(x - MIC_W / 2, -CUT_OUT, x + MIC_W / 2, -CUT_IN)
                         for x in MIC_XS])                     # Z 19.4..20.9
 
@@ -234,12 +280,14 @@ def build():
             m += pl.prism(c_boss.difference(c_bore),
                           BOSS_SOLID_TOP - OVL, BOSS_TOP)
 
-    # -- board bay: back shelf (tab off the wall, 0.2 radial lap into the
-    #    liner), front bridge wall, 4 locator posts ------------------------
-    m += pl.prism(box(-SHELF_X, SHELF_Y0, SHELF_X, SHELF_Y1),
-                  SHELF_Z0, pl.BOARD_Z)
-    m += pl.prism(box(-BRIDGE_X, BRIDGE_Y0, BRIDGE_X, BRIDGE_Y1),
-                  pl.FLOOR - OVL, pl.BOARD_Z)
+    # -- board bay: two side-wall shelves (tabs off the walls, 0.2 radial lap
+    #    into the liner), two mid-span ribs, 4 locator posts ---------------
+    for sx in (-1, 1):
+        m += pl.prism(box(min(sx * SHELF_X0, sx * SHELF_X1), -SHELF_Y,
+                          max(sx * SHELF_X0, sx * SHELF_X1), SHELF_Y),
+                      SHELF_Z0, pl.BOARD_Z)
+    for rx0, rx1 in RIB_X:
+        m += pl.prism(box(rx0, RIB_Y0, rx1, RIB_Y1), pl.FLOOR - OVL, pl.BOARD_Z)
     for x, y in POST_XY:
         m += pl.prism(affinity.translate(pl.circle(POST_D), x, y),
                       pl.FLOOR - OVL, POST_TOP)

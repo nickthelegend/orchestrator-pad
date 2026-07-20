@@ -1,4 +1,4 @@
-# Orchestrator Pad — dimensional spec (v4)
+# Orchestrator Pad — dimensional spec (v6)
 
 Open-source ESP32 macropad for orchestrating coding agents: lock a target agent
 (Grok / Codex / Claude Code / Antigravity / opencode / Kiro / Cursor),
@@ -38,31 +38,50 @@ Total: **14 MX switches** (13 x 1u + 1 x 2u), 1 EC11 encoder.
 - 4 corner bosses Ø7.0 at (±39, ±39): solid pedestal from floor top (Z2.4)
   to **Z=19.5**, insert ring Ø7.0/Ø4.0 to **Z=25.5** (bore 6.0 deep from the
   top, floor at Z 19.5 — M3 heat-set insert).
-- **USB window**, back wall (Y=+45): **26.0 wide** centered X=0,
-  **Z 17.0..23.5**, through BOTH wall columns. The board's dual side-by-side
-  USB-C ports sit on its TOP face (shells 8.94 x 3.3 → Z 17.6..20.9, center
-  19.25) and exit here; the window is wide + tall enough that exact port
-  offsets don't matter (shells stay inside for port centers |x| ≤ 8.5, a
-  12-wide plug hood for |x| ≤ 7.0), and the receptacle face sits only ~1.7
-  behind the outer wall — under the ~2.5 of exposed plug shroud, so any
-  hood works at the aperture mouth. The window top crosses the 21.5 ledge;
-  the plate skirt is notched over it. (Replaces v3's X=+7.79 slot and the
-  UART relief pocket.)
-- **Board bay** — dual-USB-C ESP32-S3 clone, components UP, factory header
-  pins DOWN, centered X=0, back edge at Y=+42.0, up to **30.0 wide x 64.0
-  long**:
-  - back shelf: tab protruding 1.6 from the back-wall inner face, x -14..14,
-    body Z 13.5..16.0 — the board's back edge seats on its **Z=16.0** top
-    face (1.0 bearing, 0.6 edge-to-wall gap).
-  - front bridge: wall x -16..16, Y +4.0..+7.0, floor to **Z=16.0** —
-    mid-span support between the speaker bay and the wiring bay.
-  - 4 locator posts Ø5.0, tops **Z=19.0**, at (±17.6, 40.0) and
-    (±17.6, +5.5): lateral cage only, 0.1 clearance per side to a 30-wide
-    board, 1.4 above the board top.
+- **USB windows**, BOTH side walls (X=+45 and X=-45): each **26.0 wide** in
+  Y centered Y=0, **Z 17.0..23.5**, through BOTH wall columns. v6 turns the
+  board 90° so its ports face a side wall, and the bay is **reversible** —
+  the board installs **ports-right or ports-left**, and the *unused* window
+  is documented as a **wire pass-through** (run the speaker/mic/amp harness
+  or a USB extension out of it). The board's dual side-by-side USB-C ports
+  sit on its TOP face (shells 8.94 x 3.3 → Z 17.6..20.9, center 19.25) and
+  exit through whichever window they face; each window is wide + tall enough
+  that exact port offsets don't matter (shells stay inside for port centers
+  |y| ≤ 8.53, a 12-wide plug hood for |y| ≤ 7.0), and the receptacle face
+  sits only ~1.7 behind the outer wall — under the ~2.5 of exposed plug
+  shroud, so any hood works at the aperture mouth. Each window top crosses
+  the 21.5 ledge; the plate skirt is notched over both. The two side cuts
+  split each cut wall band into a back arc and a front arc — every piece is
+  still its own watertight prism, fused to the solid ring bands above and
+  below by the 0.2 lap.
+- **Board bay (rotated + REVERSIBLE)** — dual-USB-C ESP32-S3 clone,
+  components UP, factory header pins DOWN, laid **along X**: up to **64.0
+  long (X) x 30.0 wide (Y)**, centered Y=0 (|y| ≤ 15). Two installs, both
+  seating identically because every bay feature is mirror-symmetric about
+  X=0:
+  - **ports-right** X **-22.0 … +42.0** (USB-C exits the X=+45 window)
+  - **ports-left**  X **-42.0 … +22.0** (USB-C exits the X=-45 window)
+  - side shelves (BOTH walls): tabs protruding 1.6 from each side wall's
+    inner face (42.6), spanning **|x| 41.0..42.8** (0.2 lap into the liner)
+    and **|y| ≤ 14.0**, body Z 13.5..16.0 — the board's port edge seats on
+    one and its far edge overhangs the other; **Z=16.0** top faces (1.0
+    bearing, 0.6 edge-to-wall gap on the port side).
+  - mid-span ribs: two walls at **X +4.0..+7.0** and **X -7.0..-4.0**,
+    **Y +1.0..+16.0**, floor to **Z=16.0** — they carry the board's middle
+    (~112 mm² of total seat bearing per orientation). They stay at Y ≥ +1.0
+    on purpose: the speaker flange occupies X ±36, Y -42..0, and a rib
+    crossing it would foul the flange (1.0 clear as drawn).
+  - 4 locator posts Ø5.0, tops **Z=19.0**, at **(±20.0, +17.6)** and
+    **(±39.0, -17.6)**: lateral cage in Y only, inner faces at |y| = 15.1 →
+    0.1 clearance per side to a 30-wide board, 1.4 above the board top.
+    Each orientation is caged by three of the four (two north, one south);
+    the Y-negative pair sits at |x| = 39 so it clears the speaker flange
+    edge at 36 by 0.5.
   - under-board clearance floor→16.0 = **13.6 mm** for the soldered header
-    pins (~8.5 under the PCB) + angled dupont connectors. Wire in the open
-    bay **Y +7..+41**. Pin tails that land over the bridge (Y +4..+7) must
-    be clipped flush; over the speaker zone (Y < +4) the driver bump can
+    pins (~8.5 under the PCB) + angled dupont connectors. Headers now run
+    along the board's long edges (y = ±15). Wire in the open pockets either
+    side of the ribs. Pin tails that land over a rib (X ±4..7, Y +1..+16)
+    must be clipped flush; over the speaker zone (Y < 0) the driver bump can
     rise to Z 14.9 under the pin rows — clip there too, or verify your
     speaker's bump footprint. (Headers usually stop ~2 mm short of the
     board ends, clearing the 1.0 shelf lip.)
@@ -83,11 +102,20 @@ Total: **14 MX switches** (13 x 1u + 1 x 2u), 1 EC11 encoder.
     underside at 16.0 by 1.1. **Measure the bump height — the bay assumes
     ≤ 11.**
 - **Amp pocket**: four L-corner ridges (1.5 wide, 2.0 tall, 6-long legs)
-  framing a 20 x 20 pocket centered (+31, +14) — the MAX98357A drops in,
-  foam-tape mounted.
-- **Wire posts**: two Ø5.0 posts, 8.0 tall, at (-34, +12) and (-34, +30),
-  each with a 3.2-wide x 2.0-tall through-notch at Z 3..5 for zip ties
-  (west wiring channel).
+  framing a 20 x 20 pocket centered **(+22, +27)** — the MAX98357A drops in,
+  foam-tape mounted. v6 moved it to the back strip, out from under the
+  rotated board: the ridges span X 10.5..33.5, Y 15.5..38.5, so the outer
+  edge clears the board edge at Y 15.0 by **0.5** (both orientations), the
+  corner bosses' inner face at X 35.5 by **2.0**, and the speaker by 15.5.
+  The (+20, +17.6) locator post clips the nominal pocket's south edge (it
+  rises to Y 20.1); the **post-free rectangle is still 20 x 16.9** (Y
+  20.1..37), so an ~18 x 16 breakout drops in biased north.
+- **Wire posts**: two Ø5.0 posts, 8.0 tall, at **(-30, +20)** and
+  **(-30, +34)**, each with a 3.2-wide x 2.0-tall through-notch at Z 3..5
+  for zip ties (west wiring channel). v6 pushed them north-east so they sit
+  out from under the rotated board (2.5 clear of the ports-left footprint)
+  and out of the left window corridor (9.7 clear of the y ±13 aperture),
+  while still clearing the (-39, +39) corner boss by 4.3.
 - **Mic grille**, front wall (Y=-45): 3 x 1.5 square ports, spacing 3.0,
   centered X=-20, **Z 19.4..20.9** — fully below the 21.5 ledge; the round
   I2S mic module glues behind them, above the speaker body. (Replaces v3's
@@ -123,11 +151,15 @@ Total: **14 MX switches** (13 x 1u + 1 x 2u), 1 EC11 encoder.
   87.3 x 87.3 R6.9 x-y, inner 85.0 x 85.0 R6.3 (drops inside the tray's
   87.6 upper 1.2 wall with ~0.15 clearance per side). Notched so the case
   closes and USB mates: **Ø8.6 corner clearances** at (±39, ±39) around the
-  tray bosses (which rise to Z 25.5, through the skirt band), plus ONE back
-  notch spanning **x -14..+14** (full skirt depth) — the tray's USB window
-  top (23.5) crosses the 21.5 ledge, so the notch opens the whole window
-  corridor for the aperture and the plug hood. (v3's separate USB/UART and
-  front mic notches are gone: the v4 mic grille sits below the ledge.)
+  tray bosses (which rise to Z 25.5, through the skirt band), plus **TWO
+  side notches** spanning **y -14..+14** (full skirt depth) at
+  **x +41..+44** and **x -44..-41** — each tray USB window top (23.5)
+  crosses the 21.5 ledge, so the notches open both window corridors for the
+  aperture and the plug hood, whichever side the ports face (1.0 margin per
+  side over the y ±13 aperture). The ring survives as 6 segments (4 boss
+  cuts + 2 side notches), each a watertight prism fused to plate band A.
+  (v3's separate USB/UART and front mic notches are gone: the mic grille
+  sits below the ledge.)
 - 4 screw towers Ø7.6 from Z 25.5 → 28.2 at (±39, ±39), through-hole Ø3.4
   continuing through the plate, counterbore Ø6.4 x 0.8 from the top face
   (M3 x 8 button-head into the tray inserts).
@@ -179,10 +211,13 @@ Logo glyphs (`grok`, `codex`, `claude`, `antigravity`, `opencode`, `kiro`,
 `cursor`) are simplified geometric homages debossed 0.6 into the caps; the
 original marks belong to their respective projects.
 
-## BOM (v4)
+## BOM (v6)
 Dual-USB-C ESP32-S3 clone board **with factory pin headers** (pins DOWN,
 components + USB-C on TOP — the 13.6 under-board bay swallows the ~8.5 pin
-tails; v3's headerless rule is gone), MAX98357A I2S amp breakout, 4Ω 3W
+tails; v3's headerless rule is gone). **Fit it sideways**: the board lies
+along X with its ports facing a side wall, and you choose **ports-right or
+ports-left** at assembly time — the bay is symmetric, so both drop in the
+same way. Also: MAX98357A I2S amp breakout, 4Ω 3W
 cavity speaker (flange ≤ 72 x 42, driver bump ≤ 11 tall — **measure it**)
 + 4 x **M2.5x6** self-tappers, round I2S mic module (INMP441-class), EC11
 encoder (M7 bush) + this knob, 14 x MX-style switches (donor-harvested
@@ -194,8 +229,10 @@ for the wire posts, jumper wires. Optional: WS2812 under the preset keys.
 
 ## Print notes
 0.4 nozzle, 0.2 layers, PETG or PLA. Tray + plate flat side down, no
-supports (the 26 mm bridge over the USB window and the 1.6 shelf tab print
-unsupported). Caps upside down (top face on bed) or with tree supports;
+supports (the **two** 26 mm bridges over the side USB windows and the
+**two** 1.6 shelf tabs print unsupported; the mid-span ribs are plain
+3.0-thick walls off the floor). Caps upside down (top face on bed) or with
+tree supports;
 knob upright. Case is ~29.5 tall; with caps ≈ 42.5 overall (knob crown at
 45.5). Every part = union of closed shells; slicers merge
 coplanar/overlapping shells.

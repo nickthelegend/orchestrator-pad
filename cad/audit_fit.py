@@ -1,10 +1,15 @@
 """audit_fit.py — AUDIT probe: component fit + SPEC compliance (read-only).
 
-v4 "fat base" expectations: tall tray (28.0) with the component bay —
-board shelf / bridge / locator posts, the wide back USB window, the
-down-firing speaker bay, the amp pocket, the zip-tie wire posts and the
-high mic grille — plus the +10.5-shifted plate/caps/knob stack
-(plate 28.0..29.5, caps at 35.0, knob at 30.5).
+v6 "side USB" expectations: tall tray (28.0) with the component bay —
+the REVERSIBLE rotated board bay (dual side-wall shelves / two mid-span
+ribs / 4 locator posts), the TWO side USB windows, the down-firing speaker
+bay, the amp pocket, the zip-tie wire posts and the high mic grille — plus
+the +10.5-shifted plate/caps/knob stack (plate 28.0..29.5, caps at 35.0,
+knob at 30.5).
+
+The board runs along X and installs either way round:
+    ports-right  X -22.0 .. +42.0     ports-left  X -42.0 .. +22.0
+Checks that can differ between the two orientations are run for BOTH.
 
 Recomputes every checklist quantity from the actual build() outputs /
 partlib constants. Prints PASS/FAIL per item; exits non-zero on any FAIL.
@@ -36,13 +41,14 @@ def sec(t):
     print(f"\n=== {t} ===")
 
 
-# component data (v4 hardware per SPEC)
+# component data (v6 hardware per SPEC). The board is ROTATED: BOARD_W (30)
+# is its span in Y, BOARD_L (64) its span in X, ports on a short (X) edge.
 BRD_W, BRD_L, BRD_T = pl.BOARD_W, pl.BOARD_L, 1.6      # caged max envelope
-BRD_BACK = 42.0                        # board back edge (SPEC board bay)
+BRD_PORT_X = 42.0                      # port-edge X of a ports-right install
 BRD_TOP = pl.BOARD_Z + BRD_T           # 17.6
 INSUL_H = 2.5                          # factory header insulator (on TOP)
 INSUL_TOP = BRD_TOP + INSUL_H          # 20.1
-SHELL_W, SHELL_H = 8.94, 3.3           # board-top USB-C shell
+SHELL_W, SHELL_H = 8.94, 3.3           # board-top USB-C shell (W spans Y now)
 SHELL_Z0, SHELL_Z1 = BRD_TOP, BRD_TOP + SHELL_H        # 17.6..20.9
 CONN_OVH = 1.31                        # USB-C shells overhang the board edge
 HOOD_W, HOOD_H = 12.0, 7.0             # cable plug overmold hood
@@ -51,6 +57,19 @@ EC11_BODY_SQ = 12.0                    # EC11 body width
 EC11_BODY_DEPTH = 7.0                  # body depth below the plate bottom
 NUT_AF, NUT_H = 11.5, 2.2              # EC11 M7 panel nut
 FOOT_H = 3.0                           # BOM: feet >= 3mm tall
+
+
+def board_rect(sx):
+    """Board footprint for sx=+1 (ports-right, X -22..+42) or sx=-1
+    (ports-left, X -42..+22). 30 wide in Y either way."""
+    a, b = sx * BRD_PORT_X, sx * (BRD_PORT_X - BRD_L)
+    return box(min(a, b), -BRD_W / 2, max(a, b), BRD_W / 2)
+
+
+BRD_R = board_rect(1)                  # ports-right footprint
+BRD_LF = board_rect(-1)                # ports-left  footprint
+BRD_ANY = BRD_R.union(BRD_LF)          # union envelope (x -42..42, |y|<=15)
+BOARD_ORIENTS = (("ports-right", 1, BRD_R), ("ports-left", -1, BRD_LF))
 
 # ---------------------------------------------------------------- 1. grid ----
 sec("1. key grid vs SPEC")
@@ -147,10 +166,9 @@ ec_bot = pl.PLATE_Z0 - EC11_BODY_DEPTH                  # 21.0
 ec_body = affinity.translate(
     box(-EC11_BODY_SQ / 2, -EC11_BODY_SQ / 2, EC11_BODY_SQ / 2, EC11_BODY_SQ / 2),
     *pl.KNOB_POS)
-board_rect = box(-BRD_W / 2, BRD_BACK - BRD_L, BRD_W / 2, BRD_BACK)
-d_ec_brd = ec_body.distance(board_rect)
+d_ec_brd = ec_body.distance(BRD_ANY)   # worst case over BOTH orientations
 print(f"EC11 body bottom Z {ec_bot:.1f} (plate bottom {pl.PLATE_Z0} - {EC11_BODY_DEPTH}); "
-      f"lateral gap to board {d_ec_brd:.2f} (board top {BRD_TOP:.1f}) "
+      f"lateral gap to board (either orientation) {d_ec_brd:.2f} (board top {BRD_TOP:.1f}) "
       f"{check('EC11 body clear of board', d_ec_brd >= 0.5 or ec_bot - BRD_TOP >= 0.5)}")
 tray_liner_in = pl.rounded_rect(pl.CASE_W - 2 * pl.WALL, pl.CASE_W - 2 * pl.WALL,
                                 pl.CASE_R - pl.WALL)
@@ -185,17 +203,23 @@ z_hi = min(pl.PLATE_Z0 + 0.2, part_tray.BOSS_TOP)
 print(f"skirt ∩ bosses XY area: {inter.area:.2f} mm^2, radial gap {boss_gap:.2f} "
       f"(boss band Z {z_lo:.1f}..{z_hi:.1f})  "
       f"{check('skirt/boss', inter.area < 0.01 and boss_gap >= 0.3)}")
-# the USB window's upper band (21.5..23.5) crosses the skirt seat: the back
-# notch (x -14..14) must open the whole 26-wide window corridor
-win_corr = box(-part_tray.WIN_W / 2, 40.0, part_tray.WIN_W / 2, 46.0)
-blocked = skirt.intersection(win_corr).area
-print(f"skirt material inside USB window corridor (x ±{part_tray.WIN_W / 2:.0f}): "
-      f"{blocked:.2f} mm^2 "
-      f"{check('back notch clears window', blocked < 0.01)}")
-notch_margin = part_plate.USB_NOTCH_X1 - part_tray.WIN_W / 2
-print(f"back notch x {part_plate.USB_NOTCH_X0}..{part_plate.USB_NOTCH_X1} vs window "
+# each USB window's upper band (21.5..23.5) crosses the skirt seat: BOTH
+# side notches (y -14..14) must open their whole 26-wide window corridor
+for side, sx in (("right", 1), ("left", -1)):
+    win_corr = box(min(sx * 40.0, sx * 46.0), -part_tray.WIN_W / 2,
+                   max(sx * 40.0, sx * 46.0), part_tray.WIN_W / 2)
+    blocked = skirt.intersection(win_corr).area
+    print(f"skirt material inside the {side} USB window corridor "
+          f"(y ±{part_tray.WIN_W / 2:.0f}): {blocked:.2f} mm^2 "
+          f"{check(f'{side} notch clears window', blocked < 0.01)}")
+notch_margin = part_plate.USB_NOTCH_Y1 - part_tray.WIN_W / 2
+print(f"side notches y {part_plate.USB_NOTCH_Y0}..{part_plate.USB_NOTCH_Y1} at x "
+      f"±{part_plate.USB_NOTCH_X0}..±{part_plate.USB_NOTCH_X1} vs window "
       f"±{part_tray.WIN_W / 2:.0f}: margin {notch_margin:.1f}/side "
       f"{check('notch margin', notch_margin >= 0.5)}")
+print(f"skirt ring survives as {len(pl._polys(skirt))} segment(s) "
+      f"(4 boss cuts + 2 side notches) "
+      f"{check('skirt segments', len(pl._polys(skirt)) == 6)}")
 # the v4 mic grille sits fully below the ledge — no front notch needed
 mic_margin = pl.LEDGE_Z - part_tray.MIC_Z1
 print(f"mic grille ceiling {part_tray.MIC_Z1} vs ledge {pl.LEDGE_Z}: margin "
@@ -222,53 +246,103 @@ print(f"M3x{SCREW_L:.0f} tip lands at Z{tip_z:.1f}; bore floor Z{bore_floor:.1f}
 print(f"insert zone top Z{part_tray.BOSS_TOP:.1f}; screw reaches the insert: "
       f"{check('screw engages insert', tip_z <= part_tray.BOSS_TOP - 3)}")
 
-# ---------------------------------------------------------- 7. USB window ----
-sec("7. USB window vs dual-USB-C board (board-top ports)")
+# --------------------------------------------------------- 7. USB windows ----
+sec("7. USB windows (both side walls) vs dual-USB-C board (board-top ports)")
 win_lo, win_hi = -part_tray.WIN_W / 2, part_tray.WIN_W / 2
-print(f"window: {part_tray.WIN_W} wide (x {win_lo:+.0f}..{win_hi:+.0f}), "
-      f"Z {part_tray.WIN_Z0}..{part_tray.WIN_Z1} "
+print(f"windows: RIGHT (X=+45) and LEFT (X=-45), each {part_tray.WIN_W} wide "
+      f"(y {win_lo:+.0f}..{win_hi:+.0f}), Z {part_tray.WIN_Z0}..{part_tray.WIN_Z1} "
       f"({part_tray.WIN_Z1 - part_tray.WIN_Z0:.1f} tall) "
       f"{check('window = USB_WIN', (part_tray.WIN_W, part_tray.WIN_Z0, part_tray.WIN_Z1) == pl.USB_WIN)}")
-print(f"shell band: {SHELL_W} w x {SHELL_H} h on the board top -> Z "
+win2d = part_tray.win_cutter()
+wb = win2d.bounds
+print(f"cutter: {len(pl._polys(win2d))} boxes, bounds x {wb[0]:.0f}..{wb[2]:.0f} "
+      f"y {wb[1]:.0f}..{wb[3]:.0f}, mirror-symmetric about X=0 "
+      f"{check('two mirrored side cutters', len(pl._polys(win2d)) == 2 and abs(wb[0] + wb[2]) < 1e-9)}")
+print(f"shell band: {SHELL_W} w (in Y) x {SHELL_H} h on the board top -> Z "
       f"{SHELL_Z0:.1f}..{SHELL_Z1:.1f} (center {(SHELL_Z0 + SHELL_Z1) / 2:.2f}); margins "
       f"{SHELL_Z0 - part_tray.WIN_Z0:.1f} below / {part_tray.WIN_Z1 - SHELL_Z1:.1f} above "
       f"{check('shell inside window band', SHELL_Z0 - part_tray.WIN_Z0 >= 0.3 and part_tray.WIN_Z1 - SHELL_Z1 >= 0.3)}")
 shell_env = win_hi - SHELL_W / 2
 hood_env = win_hi - HOOD_W / 2
-print(f"port-offset envelope: shell fully in window for |x| <= {shell_env:.1f}, "
-      f"hood for |x| <= {hood_env:.1f} (typical dual ports sit at |x| <= 5.5) "
-      f"{check('port offsets dont matter', shell_env >= 5.5 and hood_env >= 5.5)}")
-recess = (pl.CASE_W / 2) - (BRD_BACK + CONN_OVH)       # 1.69
-print(f"receptacle face: board edge {BRD_BACK} + overhang {CONN_OVH} -> y "
-      f"{BRD_BACK + CONN_OVH:.2f}; recess behind outer face {recess:.2f}")
+print(f"port-offset envelope: shell fully in window for |y| <= {shell_env:.2f}, "
+      f"hood for |y| <= {hood_env:.1f} (spec requires |y| <= 8.5 for the shell) "
+      f"{check('port offsets dont matter', shell_env >= 8.5 and hood_env >= 5.5)}")
+# receptacle recess is the same on either side: the board's port edge sits
+# BRD_PORT_X from center, the outer wall face at CASE_W/2.
+recess = (pl.CASE_W / 2) - (BRD_PORT_X + CONN_OVH)       # 1.69
+for label, sx, rect in BOARD_ORIENTS:
+    edge = sx * BRD_PORT_X
+    print(f"  {label:11s}: board footprint x {rect.bounds[0]:+.1f}..{rect.bounds[2]:+.1f}, "
+          f"port edge x {edge:+.1f} -> receptacle face |x| "
+          f"{BRD_PORT_X + CONN_OVH:.2f}, recess behind the outer face {recess:.2f}")
+# threshold is the physical mating criterion: the recess must be swallowed by
+# the plug's exposed shroud so the hood meets the aperture mouth.
 print(f"plug hood {HOOD_W:.0f}w x {HOOD_H:.0f}t vs aperture {part_tray.WIN_W:.0f}w x "
       f"{part_tray.WIN_Z1 - part_tray.WIN_Z0:.1f}t: width play "
       f"{(part_tray.WIN_W - HOOD_W) / 2:.1f}/side; recess {recess:.2f} <= exposed-shroud "
       f"reach {SHROUD_EXPOSED:.1f} -> plug mates with the hood at the mouth "
       f"{check('plug hood passes aperture', HOOD_W <= part_tray.WIN_W - 2 and recess <= SHROUD_EXPOSED)}")
-print(f"  (zero-overhang clone: recess {pl.CASE_W / 2 - BRD_BACK:.1f} — still under "
+print(f"  (zero-overhang clone: recess {pl.CASE_W / 2 - BRD_PORT_X:.1f} — still under "
       f"most cables' 2.5..3.5 exposed shroud)")
+print(f"the unused window is a wire pass-through (same 26 x "
+      f"{part_tray.WIN_Z1 - part_tray.WIN_Z0:.1f} aperture on the opposite wall)")
 
 # ----------------------------------------------------------- 8. board bay ----
-sec("8. board bay (shelf / bridge / locator posts)")
-print(f"shelf: x ±{part_tray.SHELF_X}, y {part_tray.SHELF_Y0}..{part_tray.SHELF_Y1} "
-      f"(tab {pl.CASE_W / 2 - pl.WALL - part_tray.SHELF_Y0:.1f} off the wall), body "
-      f"{part_tray.SHELF_Z0}..{pl.BOARD_Z} "
-      f"{check('shelf top = BOARD_Z', part_tray.SHELF_Y0 == 41.0 and part_tray.SHELF_Z0 == 13.5)}")
-bearing = BRD_BACK - part_tray.SHELF_Y0
-print(f"board back edge {BRD_BACK} -> shelf bearing {bearing:.1f} deep, wall gap "
-      f"{pl.CASE_W / 2 - pl.WALL - BRD_BACK:.1f} "
+sec("8. board bay (dual side shelves / mid-span ribs / locator posts) — REVERSIBLE")
+shelves = [box(min(sx * part_tray.SHELF_X0, sx * part_tray.SHELF_X1), -part_tray.SHELF_Y,
+               max(sx * part_tray.SHELF_X0, sx * part_tray.SHELF_X1), part_tray.SHELF_Y)
+           for sx in (-1, 1)]
+shelves2d = unary_union(shelves)
+print(f"shelves: x ±{part_tray.SHELF_X0}..±{part_tray.SHELF_X1}, y "
+      f"±{part_tray.SHELF_Y} (tab {pl.CASE_W / 2 - pl.WALL - part_tray.SHELF_X0:.1f} off "
+      f"the wall inner face {pl.CASE_W / 2 - pl.WALL:.1f}, {part_tray.SHELF_X1 - (pl.CASE_W / 2 - pl.WALL):.1f} lap "
+      f"into the liner), body {part_tray.SHELF_Z0}..{pl.BOARD_Z} "
+      f"{check('shelf top = BOARD_Z', part_tray.SHELF_X0 == 41.0 and part_tray.SHELF_Z0 == 13.5)}")
+sb = shelves2d.bounds
+print(f"  two tabs, mirrored: bounds x {sb[0]:.1f}..{sb[2]:.1f} "
+      f"{check('two mirrored shelves', len(shelves) == 2 and abs(sb[0] + sb[2]) < 1e-9)}")
+bearing = BRD_PORT_X - part_tray.SHELF_X0
+print(f"board port edge |x| {BRD_PORT_X} -> shelf bearing {bearing:.1f} deep, wall gap "
+      f"{pl.CASE_W / 2 - pl.WALL - BRD_PORT_X:.1f} (same on either side) "
       f"{check('shelf bearing', bearing >= 0.8)}")
-print(f"bridge: x ±{part_tray.BRIDGE_X}, y {part_tray.BRIDGE_Y0}..{part_tray.BRIDGE_Y1}, "
-      f"floor..{pl.BOARD_Z} "
-      f"{check('bridge spans board width', part_tray.BRIDGE_X >= BRD_W / 2 + 0.5)}")
+print(f"  shelf y ±{part_tray.SHELF_Y} vs board y ±{BRD_W / 2:.0f}: seats "
+      f"{BRD_W / 2 - part_tray.SHELF_Y:.1f} inboard of each long edge "
+      f"{check('shelf inside board width', part_tray.SHELF_Y <= BRD_W / 2)}")
+ribs2d = unary_union([box(x0, part_tray.RIB_Y0, x1, part_tray.RIB_Y1)
+                      for x0, x1 in part_tray.RIB_X])
+print(f"ribs: x {part_tray.RIB_X}, y {part_tray.RIB_Y0}..{part_tray.RIB_Y1}, "
+      f"floor..{pl.BOARD_Z} (mid-span, replaces the v5 front bridge) "
+      f"{check('two mirrored ribs', len(part_tray.RIB_X) == 2 and abs(part_tray.RIB_X[0][0] + part_tray.RIB_X[1][1]) < 1e-9)}")
+rib_span = min(part_tray.RIB_Y1, BRD_W / 2) - part_tray.RIB_Y0
+print(f"  rib bearing under the board: y {part_tray.RIB_Y0}..{min(part_tray.RIB_Y1, BRD_W / 2):.0f} "
+      f"= {rib_span:.1f} long, at |x| {part_tray.RIB_X[0][0]:.0f}..{part_tray.RIB_X[0][1]:.0f} "
+      f"(mid-span of a {BRD_L:.0f}-long board either way round) "
+      f"{check('ribs bear on board', rib_span >= 8.0)}")
 tangent = 17.6 - part_tray.POST_D / 2
 side_clr = tangent - BRD_W / 2
 cage_h = part_tray.POST_TOP - BRD_TOP
 print(f"posts Ø{part_tray.POST_D} at {part_tray.POST_XY}, tops Z {part_tray.POST_TOP}: "
-      f"inner tangent ±{tangent:.1f} -> {side_clr:.2f}/side to a {BRD_W:.0f}-wide board; "
+      f"inner tangent |y| ±{tangent:.1f} -> {side_clr:.2f}/side to a {BRD_W:.0f}-wide board; "
       f"cage {cage_h:.1f} above the board top "
       f"{check('posts cage board', 0.05 <= side_clr <= 0.3 and cage_h >= 1.0)}")
+posts2d = unary_union([affinity.translate(pl.circle(part_tray.POST_D), x, y)
+                       for x, y in part_tray.POST_XY])
+for label, sx, rect in BOARD_ORIENTS:
+    caging = [(x, y) for x, y in part_tray.POST_XY
+              if rect.bounds[0] - 0.01 <= x <= rect.bounds[2] + 0.01]
+    north = [p for p in caging if p[1] > 0]
+    south = [p for p in caging if p[1] < 0]
+    print(f"  {label:11s}: {len(caging)} post(s) over the board's X span "
+          f"({len(north)} north / {len(south)} south) "
+          f"{check(f'{label} caged both sides', len(north) >= 1 and len(south) >= 1)}")
+print(f"  posts vs board footprint (no post under the board, either orientation): "
+      f"R {posts2d.intersection(BRD_R).area:.2f} / L {posts2d.intersection(BRD_LF).area:.2f} mm^2 "
+      f"{check('posts do not underlie the board', posts2d.intersection(BRD_ANY).area < 0.01)}")
+seats2d = shelves2d.union(ribs2d)
+for label, sx, rect in BOARD_ORIENTS:
+    supported = seats2d.intersection(rect).area
+    print(f"  {label:11s}: seat bearing area under the board {supported:.1f} mm^2 "
+          f"{check(f'{label} seats at 16.0', supported >= 100.0)}")
 under = pl.BOARD_Z - pl.FLOOR
 print(f"under-board bay: floor {pl.FLOOR} -> {pl.BOARD_Z} = {under:.1f} for the "
       f"factory header pins (~8.5) + angled dupont connectors "
@@ -282,14 +356,15 @@ print(f"speaker bump top {pl.FLOOR}+1.5+{pl.SPK_BUMP_MAX} = {bump_top:.1f} vs bo
 sec("9. switch under-plate envelope vs board stack")
 PIN_TIP = pl.PLATE_Z1 - 8.3            # 21.2 — MX center post + pins
 HOUS_BOT = pl.PLATE_Z1 - 5.0           # 24.5 — MX housing base
-strips = unary_union([box(BRD_W / 2 - 2.5, BRD_BACK - BRD_L, BRD_W / 2, BRD_BACK),
-                      box(-BRD_W / 2, BRD_BACK - BRD_L, -BRD_W / 2 + 2.5, BRD_BACK)])
+# the headers run along the board's LONG edges — now the y = ±15 edges
+strips = unary_union([box(-BRD_PORT_X, BRD_W / 2 - 2.5, BRD_PORT_X, BRD_W / 2),
+                      box(-BRD_PORT_X, -BRD_W / 2, BRD_PORT_X, -BRD_W / 2 + 2.5)])
 over_board, over_strip = [], []
 for k in keys:
     post = Point(k["x"], k["y"]).buffer(2.0, quad_segs=16)
     pins = [Point(k["x"] - 3.81, k["y"] + 2.54), Point(k["x"] + 2.54, k["y"] + 5.08)]
     zone = unary_union([post] + pins)
-    if zone.intersects(board_rect):
+    if zone.intersects(BRD_ANY):
         over_board.append(k["id"])
     if any(strips.contains(p) for p in pins) or post.intersects(strips):
         over_strip.append(k["id"])
@@ -297,7 +372,7 @@ clr_ins = PIN_TIP - INSUL_TOP
 clr_brd = PIN_TIP - BRD_TOP
 print(f"switch lowest point Z {PIN_TIP:.1f} (plate top {pl.PLATE_Z1} - 8.3); "
       f"housing base Z {HOUS_BOT:.1f}")
-print(f"keys over the board: {over_board}")
+print(f"keys over the board (union of both orientations): {over_board}")
 print(f"keys with pins/posts over the header-insulator strips: {over_strip}")
 print(f"pins vs insulator top {INSUL_TOP:.1f}: clearance {clr_ins:.1f} "
       f"{check('pins vs insulators >= 0.8', clr_ins >= 0.8)}")
@@ -351,19 +426,38 @@ print(f"flange 72x42 vs front bosses: sharp-corner overlap {sharp_ov:.2f} mm^2 "
       f"(INFO — real cavity flanges are rounded); corner R6.5 gap {r65_gap:.3f} "
       f"{check('R6.5 flange clears bosses', sharp_ov < 3.0 and r65_gap > 0.05)}")
 d_fl_wall = liner_in.exterior.distance(flange_sharp)
-obstacles = unary_union(
-    [affinity.translate(pl.circle(part_tray.POST_D), x, y) for x, y in part_tray.POST_XY]
-    + [affinity.translate(pl.circle(part_tray.WPOST_D), x, y) for x, y in part_tray.WPOST_XY]
-    + [box(-part_tray.BRIDGE_X, part_tray.BRIDGE_Y0, part_tray.BRIDGE_X, part_tray.BRIDGE_Y1),
-       part_tray.amp_ridges()])
+# v6: every bay feature must stay OUT of the speaker flange footprint
+# (X ±36, Y -42..0). The locator posts deliberately graze it at 0.5 (they
+# sit at |x| = 39 for exactly that reason), so the bar is "no intersection,
+# >= 0.4 clear" with each clearance printed.
+FLANGE_MIN = 0.4
+bay_features = {
+    "locator posts": unary_union([affinity.translate(pl.circle(part_tray.POST_D), x, y)
+                                  for x, y in part_tray.POST_XY]),
+    "wire posts": unary_union([affinity.translate(pl.circle(part_tray.WPOST_D), x, y)
+                               for x, y in part_tray.WPOST_XY]),
+    "mid-span ribs": ribs2d,
+    "amp ridges": part_tray.amp_ridges(),
+    "board shelves": shelves2d,
+}
+print(f"speaker flange footprint x ±{pl.SPK_FLANGE[0] / 2:.0f}, y "
+      f"{pl.SPK_CENTER[1] - pl.SPK_FLANGE[1] / 2:.0f}..{pl.SPK_CENTER[1] + pl.SPK_FLANGE[1] / 2:.0f} "
+      f"— every bay feature must stay clear (>= {FLANGE_MIN}):")
+for fname, geom in bay_features.items():
+    ov = geom.intersection(flange_sharp).area
+    d = geom.distance(flange_sharp)
+    print(f"  {fname:15s} overlap {ov:.3f} mm^2, clearance {d:.2f} "
+          f"{check(f'flange vs {fname}', ov < 1e-6 and d >= FLANGE_MIN)}")
+obstacles = unary_union(list(bay_features.values()))
 d_fl_obs = flange_sharp.distance(obstacles)
-print(f"flange vs walls {d_fl_wall:.2f} / vs bridge+posts+ridges {d_fl_obs:.2f} "
-      f"{check('flange drops onto floor', d_fl_wall >= 0.4 and d_fl_obs >= 2.0)}")
+print(f"flange vs walls {d_fl_wall:.2f} / vs all bay features {d_fl_obs:.2f} "
+      f"{check('flange drops onto floor', d_fl_wall >= 0.4 and d_fl_obs >= FLANGE_MIN)}")
 bump = affinity.translate(affinity.scale(pl.circle(2.0), 25.0, 20.0), *pl.SPK_CENTER)
-d_bump_bridge = bump.distance(box(-part_tray.BRIDGE_X, part_tray.BRIDGE_Y0,
-                                  part_tray.BRIDGE_X, part_tray.BRIDGE_Y1))
-print(f"oval bump (<= 50x40, top {bump_top:.1f}) vs bridge: plan gap {d_bump_bridge:.1f} "
-      f"{check('bump clears bridge', d_bump_bridge >= 2.0)}")
+d_bump_ribs = bump.distance(ribs2d)
+d_bump_posts = bump.distance(posts2d)
+print(f"oval bump (<= 50x40, top {bump_top:.1f}) vs ribs: plan gap {d_bump_ribs:.2f}; "
+      f"vs locator posts {d_bump_posts:.2f} "
+      f"{check('bump clears ribs/posts', d_bump_ribs >= 2.0 and d_bump_posts >= 2.0)}")
 tip_below_floor = 6.0 - 1.5 - pl.FLOOR                 # M2.5x6: flange + floor
 print(f"M2.5x6 from inside: head on flange top {pl.FLOOR + 1.5:.1f}, tip "
       f"{tip_below_floor:.1f} below the floor bottom; feet >= {FOOT_H:.0f} - recess "
@@ -376,13 +470,23 @@ ridges = part_tray.amp_ridges()
 pocket = box(part_tray.AMP_C[0] - 10, part_tray.AMP_C[1] - 10,
              part_tray.AMP_C[0] + 10, part_tray.AMP_C[1] + 10)
 rb = ridges.bounds
-print(f"amp pocket 20x20 at {part_tray.AMP_C}: ridges {rb[0]:.1f}..{rb[2]:.1f} x "
+print(f"amp pocket 20x20 at {part_tray.AMP_C} (back strip): ridges {rb[0]:.1f}..{rb[2]:.1f} x "
       f"{rb[1]:.1f}..{rb[3]:.1f}, h {part_tray.AMP_RIDGE_H} "
       f"{check('ridges frame pocket', ridges.intersection(pocket).area < 0.01)}")
+bosses2d = unary_union([affinity.translate(pl.circle(part_tray.BOSS_D), sx * pl.BOSS_XY,
+                                           sy * pl.BOSS_XY)
+                        for sx in (-1, 1) for sy in (-1, 1)])
 print(f"  ridge outer edge vs liner wall: {liner_in.exterior.distance(ridges):.2f}  "
-      f"pocket vs locator post: "
-      f"{pocket.distance(Point(17.6, 5.5).buffer(2.5)):.2f} "
-      f"{check('pocket clear of post', pocket.distance(Point(17.6, 5.5).buffer(2.5)) >= 0.5)}")
+      f"vs corner bosses: {ridges.distance(bosses2d):.2f}  vs locator posts: "
+      f"{ridges.distance(posts2d):.2f} "
+      f"{check('amp clear of bosses/posts', ridges.distance(bosses2d) >= 0.5 and ridges.distance(posts2d) >= 0.5)}")
+# v6: the rotated board covers x -42..+42 over |y| <= 15 across the two
+# orientations — the amp must not sit under it in EITHER install
+for label, sx, rect in BOARD_ORIENTS:
+    ov, d = ridges.intersection(rect).area, ridges.distance(rect)
+    print(f"  amp ridges vs {label:11s} board footprint: overlap {ov:.3f} mm^2, "
+          f"clearance {d:.2f} "
+          f"{check(f'amp not under board ({label})', ov < 1e-6 and d >= 0.4)}")
 print(f"  MAX98357A breakout ~18x16 in the 20x20 pocket: 1.0+ play/side (foam tape)")
 sliver = (part_tray.WPOST_D - part_tray.NOTCH_W) / 2
 print(f"wire posts Ø{part_tray.WPOST_D} at {part_tray.WPOST_XY}, {part_tray.WPOST_H} tall, "
@@ -391,18 +495,37 @@ print(f"wire posts Ø{part_tray.WPOST_D} at {part_tray.WPOST_XY}, {part_tray.WPO
       f"{check('post slivers printable', sliver >= 0.8)}")
 wposts = unary_union([Point(x, y).buffer(part_tray.WPOST_D / 2)
                       for x, y in part_tray.WPOST_XY])
-print(f"  posts vs board footprint: {wposts.distance(board_rect):.1f}  vs flange: "
-      f"{wposts.distance(flange_sharp):.1f} "
-      f"{check('wire posts clear', wposts.distance(board_rect) >= 2.0 and wposts.distance(flange_sharp) >= 2.0)}")
+for label, sx, rect in BOARD_ORIENTS:
+    ov, d = wposts.intersection(rect).area, wposts.distance(rect)
+    print(f"  wire posts vs {label:11s} board footprint: overlap {ov:.3f} mm^2, "
+          f"clearance {d:.2f} "
+          f"{check(f'wire posts not under board ({label})', ov < 1e-6 and d >= 2.0)}")
+left_corr = box(-46.0, -part_tray.WIN_W / 2, -40.0, part_tray.WIN_W / 2)
+print(f"  wire posts vs the LEFT window corridor (y ±{part_tray.WIN_W / 2:.0f}) "
+      f"{wposts.distance(left_corr):.2f}  vs corner bosses {wposts.distance(bosses2d):.2f}  "
+      f"vs flange {wposts.distance(flange_sharp):.1f} "
+      f"{check('wire posts clear', wposts.distance(left_corr) >= 2.0 and wposts.distance(bosses2d) >= 0.5 and wposts.distance(flange_sharp) >= 2.0)}")
 mic_lo, mic_hi = min(part_tray.MIC_XS), max(part_tray.MIC_XS)
 print(f"mic grille: 3 x {part_tray.MIC_W} sq ports at x {part_tray.MIC_XS}, Z "
       f"{part_tray.MIC_Z0}..{part_tray.MIC_Z1} "
       f"{check('mic port spacing', mic_hi - mic_lo == 6.0 and (mic_lo + mic_hi) / 2 == -20.0)}")
 mod_zone = box(-27.0, -42.6, -13.0, -41.0)             # Ø14 module glued on liner
 d_mod_bump = bump.distance(mod_zone)
+mic_slots = unary_union([box(x - part_tray.MIC_W / 2, -46.0, x + part_tray.MIC_W / 2, -40.0)
+                         for x in part_tray.MIC_XS])
 print(f"  round mic module glue zone (x -27..-13 on the front liner) vs oval bump: "
       f"plan gap {d_mod_bump:.1f}; module bottom sits above flange top "
       f"{pl.FLOOR + 1.5:.1f} {check('mic module above speaker', d_mod_bump >= 0.5)}")
+# v6 sanity: nothing that moved may have landed on the (unchanged) grille
+moved = {"locator posts": posts2d, "wire posts": wposts, "ribs": ribs2d,
+         "amp ridges": ridges, "shelves": shelves2d, "USB windows": part_tray.win_cutter()}
+mic_ok = True
+for mname, geom in moved.items():
+    if geom.intersects(mic_slots) or geom.intersects(mod_zone):
+        print(f"  COLLISION: {mname} hits the mic grille / module zone")
+        mic_ok = False
+print(f"  mic grille + module zone untouched by every v6-moved feature "
+      f"{check('mic grille collision-free', mic_ok)}")
 
 # ------------------------------------------------------- 12. watertight ----
 sec("12. v5.1 switch sockets + flat footprint deck")
