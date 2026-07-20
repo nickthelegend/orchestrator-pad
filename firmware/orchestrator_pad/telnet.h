@@ -10,15 +10,17 @@ class Telnet {
 public:
   typedef void (*CmdHandler)(const String &line);
 
-  void begin() {
-    _server.begin();
-    _server.setNoDelay(true);
+  void begin(uint16_t port) {
+    if (!_server) _server = new WiFiServer(port); // heap so the port comes from NVS
+    _server->begin();
+    _server->setNoDelay(true);
   }
   void onCommand(CmdHandler cb) { _cb = cb; }
 
   void poll() {
-    if (_server.hasClient()) {
-      WiFiClient nc = _server.available();
+    if (!_server) return;
+    if (_server->hasClient()) {
+      WiFiClient nc = _server->available();
       if (_client && _client.connected()) {
         nc.println("busy — a client is already attached");
         nc.stop();
@@ -60,7 +62,7 @@ public:
   }
 
 private:
-  WiFiServer _server{TELNET_PORT};
+  WiFiServer *_server = nullptr;
   WiFiClient _client;
   String _line;
   CmdHandler _cb = nullptr;
