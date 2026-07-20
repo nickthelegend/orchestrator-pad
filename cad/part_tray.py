@@ -1,17 +1,21 @@
-"""part_tray.py — Orchestrator Pad bottom shell (tray, v6 "side USB"), in
-world position per SPEC.
+"""part_tray.py — Orchestrator Pad bottom shell (tray, v7 "fatter, post-free"),
+in world position per SPEC.
 
 The interior is a component bay: the dual-USB-C ESP32-S3 clone board rides
 high (underside at Z=16.0, factory header pins DOWN into the bay), a
 down-firing cavity speaker sits flange-on-floor under the board's south
 half, the MAX98357A amp drops into a ridge-framed pocket on the back strip,
-and jumper-wire bundles tie to notched posts along the west wall.
+and jumper-wire bundles zip-tie to a low FLAT wire bar along the west wall.
 
-v6 turns the board 90°: it now runs ALONG X (30 wide in Y, up to 64 long in
-X) with its USB-C ports facing a SIDE wall, and the bay is REVERSIBLE — the
-board installs ports-right (X -22..+42) or ports-left (X -42..+22). Both
-side walls carry an identical USB window; the unused one is a wire
-pass-through.
+v7 makes the case much taller (TRAY_H 40, +12 over v6) for lots of open
+headroom above the board (~24 mm), and REMOVES every free-standing
+cylindrical post from the bay (they got in the way). The board is caged by
+FLAT features only: a back guide rail, two front corner tabs, the retained
+mid-span ribs and dual side shelves. The board still turns 90° and runs
+ALONG X (30 wide in Y, up to 64 long in X) with its USB-C ports facing a
+SIDE wall, and the bay stays REVERSIBLE — ports-right (X -22..+42) or
+ports-left (X -42..+22). Both side walls carry an identical USB window; the
+unused one is a wire pass-through.
 
 One printable part = a union of individually-watertight prism shells that
 overlap by OVL = 0.2 mm in Z (or radially) wherever they stack (the slicer
@@ -27,26 +31,32 @@ fuses them):
            neighbour's cap face IS the opening's top/bottom face.
              outer column: the 1.2 skirt-seat wall profile, floor to TRAY_H
              liner column: the inner 1.2 (thick-wall remainder), floor to
-             the ledge at Z=21.5; laps 0.2 radially into the outer column
+             the ledge at Z=33.5; laps 0.2 radially into the outer column
              so the two columns fuse. Its top cap IS the ledge face. (The
-             USB windows 17.0..23.5 cross the ledge: through the liner the
-             opening ceiling coincides with the ledge plane; the outer skin
-             keeps the exact 17.0/23.5 edges. The plate skirt is notched
-             over both windows' upper band.) The two side cuts split each
-             cut band's annulus into a back arc and a front arc — every
-             piece is still its own watertight prism, fused to the solid
-             ring bands above and below by the 0.2 lap.
-  bosses   4 corner screw bosses: solid pedestal + insert-bore ring.
+             USB windows 17.0..23.5 now sit ENTIRELY below the raised ledge:
+             both columns close the window at Z=23.5 with a solid cap and
+             run solid up to their tops — liner to the ledge 33.5, outer to
+             TRAY_H 40.0. The plate skirt no longer needs a USB notch.) The
+             two side cuts split each cut band's annulus into a back arc and
+             a front arc — every piece is still its own watertight prism,
+             fused to the solid ring bands above and below by the 0.2 lap.
+  bosses   4 corner screw bosses: solid pedestal (floor->31.5) + insert-bore
+           ring (31.3..37.5, bore 6.0 deep). These MUST stay round — M3
+           heat-set inserts thread into them.
   shelves  TWO side-wall board shelves (tabs off the right and left walls),
            mirror images about X=0: whichever way the board goes in, its
            port edge lands on one and its far edge on the other. Both top
            faces are the Z=16.0 seating plane.
   ribs     two mid-span rib walls from the floor to Z=16.0, north of the
            speaker flange (Y >= +1.0) — they carry the board's middle.
-  posts    4 Ø5 locator posts caging the board in Y (tops Z 19.0).
+  cage     FLAT board cage (no cylinders): a back guide rail (inner face
+           Y=+15.1) capping the board's +Y edge, and two front corner tabs
+           (inner face Y=-15.1, at |X|>36) capping the -Y front corners.
+           Mirror-symmetric about X=0; inner faces 0.1 off a 30-wide board.
   amp      four L-corner ridges framing the MAX98357A pocket (foam-tape),
            on the back strip clear of both board orientations.
-  wire     two Ø5 zip-tie posts with through-notches (band-split in Z).
+  wire     a low FLAT wire bar along the west interior with two zip-tie
+           through-slots (band-split in Z) — replaces the old wire posts.
 """
 from __future__ import annotations
 
@@ -83,23 +93,24 @@ WIN_W, WIN_Z0, WIN_Z1 = pl.USB_WIN         # 26.0 wide, centered Y=0, Z 17.0..23
 # (supersedes the v3 low-Z round ports).
 MIC_W = 1.5                                # port width/height (square)
 MIC_XS = (-23.0, -20.0, -17.0)             # spacing 3.0, centered X=-20
-MIC_Z0, MIC_Z1 = 19.4, 20.9                # 1.5 tall, ceiling 0.6 under LEDGE_Z
+MIC_Z0, MIC_Z1 = 19.4, 20.9                # 1.5 tall, far below LEDGE_Z (33.5)
 
 BOSS_D = 7.0                               # corner boss outer diameter
 BORE_D = 4.0                               # M3 heat-set insert bore
-BOSS_SOLID_TOP = 19.5                      # solid pedestal 2.2..19.5 (bore floor)
-BOSS_TOP = 25.5                            # bore ring 19.3..25.5 (bore 6.0 deep)
+BOSS_SOLID_TOP = 31.5                      # v7 (+12): solid pedestal 2.2..31.5
+BOSS_TOP = 37.5                            # bore ring 31.3..37.5 (bore 6.0 deep)
 
-# Board bay (v6, ROTATED + REVERSIBLE): board components-UP, header pins
-# DOWN, running along X — BOARD_W (30) wide in Y (|y| <= 15), up to BOARD_L
-# (64) long in X. It installs against EITHER side wall:
+# Board bay (v7, ROTATED + REVERSIBLE, POST-FREE): board components-UP, header
+# pins DOWN, running along X — BOARD_W (30) wide in Y (|y| <= 15), up to
+# BOARD_L (64) long in X. It installs against EITHER side wall:
 #     ports-right   X -22.0 .. +42.0   (USB-C exits the X=+45 window)
 #     ports-left    X -42.0 .. +22.0   (USB-C exits the X=-45 window)
-# Every feature of the bay is mirror-symmetric about X=0, so both
-# orientations seat identically. The underside sits at BOARD_Z = 16.0 on the
-# two side-wall shelves + the two mid-span ribs; the locator posts cage it
-# in Y (0.1 clearance per side to a 30-wide board). Under-board clearance
-# floor->16.0 = 13.6 for the factory header pins + angled dupont connectors.
+# Every FLAT cage feature is mirror-symmetric about X=0, so both orientations
+# seat identically. The underside sits at BOARD_Z = 16.0 on the two side-wall
+# shelves + the two mid-span ribs; the flat back rail + two front corner tabs
+# cage it in Y (0.1 clearance per side to a 30-wide board). Under-board
+# clearance floor->16.0 = 13.6 for the factory header pins + dupont
+# connectors.
 SHELF_Y = 14.0                             # both shelf tabs span |y| <= 14
 SHELF_X0 = HALF - pl.WALL - 1.6            # 41.0 — tab protrudes 1.6 from the
 SHELF_X1 = HALF - pl.WALL + OVL            # 42.8 —  wall inner face (0.2 lap)
@@ -112,13 +123,24 @@ SHELF_Z0 = 13.5                            # shelf body 13.5..16.0
 RIB_X = ((4.0, 7.0), (-7.0, -4.0))         # two 3.0-thick ribs, mirrored
 RIB_Y0, RIB_Y1 = 1.0, 16.0                 # 15.0 long, 1.0 clear of the flange
 
-POST_D = 5.0                               # Ø5 locator posts, tops Z 19.0
-POST_TOP = 19.0
-# Inner faces at |y| = 17.6 - 2.5 = 15.1 -> 0.1 clearance per side to a
-# 30-wide board. The two Y-negative posts sit at |x| = 39 so they clear the
-# speaker flange edge at X = ±36 by 0.5; each board orientation is caged by
-# three of the four (two north, one south).
-POST_XY = ((20.0, 17.6), (-20.0, 17.6), (39.0, -17.6), (-39.0, -17.6))
+# Board cage (v7): FLAT guide walls only — NO cylindrical locator posts. They
+# live only in speaker-clear zones (the flange is X ±36, Y -42..0; supports
+# may sit at Y > 0 anywhere, or at |X| > 36 anywhere). Inner faces at |y| =
+# 15.1 give 0.1 clearance per side to the 30-wide board; each rises to a 1.4
+# lip over the board top at 17.6.
+CAGE_Y_IN = 15.1                           # cage inner face (0.1 off board @15)
+CAGE_Y_OUT = 17.1                          # cage outer face (2.0-thick wall)
+CAGE_Z1 = 19.0                             # cage top (1.4 over the board top)
+# BACK GUIDE RAIL, capping the board's +Y edge. Nominal span was X -34..+34,
+# but the amp L-ridges reach X 10.5 inside the rail's Y band (15.1..17.1), so
+# a +-34/+-30 rail would fuse into the amp (18.3/12.9 mm^2 overlap). Trimmed
+# to +-10.0 -> clears the amp by 0.5, stays symmetric + watertight. It fuses
+# with the two mid-span ribs (X +-4..7) at Y 15.1..16 by design (ties the
+# rail to the load-bearing ribs).
+BACK_RAIL_XW = 10.0                        # rail spans X -10.0 .. +10.0
+# FRONT CORNER GUIDE TABS, capping the board's -Y front corners. Both at
+# |X| > 36 (clear of the flange edge at 36 by 0.8), Y -17.1 .. -15.1.
+TAB_X0, TAB_X1 = 36.8, 40.0                # right tab X 36.8..40.0 (left mirror)
 
 # Speaker bay (down-firing, flange ON the floor, centered SPK_CENTER):
 # racetrack floor opening with two grille bars -> 3 slots; 4 M2.5
@@ -144,16 +166,19 @@ AMP_RIDGE_W = 1.5                          # ridge width
 AMP_RIDGE_H = 2.0                          # ridge height above the floor
 AMP_RIDGE_L = 6.0                          # leg length from each outer corner
 
-# Wire posts (west wiring channel): Ø5 x 8.0 tall, each with a zip-tie
-# through-notch (open along X so a tie wraps a bundle running along Y).
-# v6: pushed north-east out from under the rotated board (Y >= 17.5 vs the
-# board edge at 15.0) and out of the LEFT window corridor (the window spans
-# Y ±13), while still clearing the (-39, +39) corner boss.
-WPOST_D = 5.0
-WPOST_H = 8.0                              # above the floor top -> Z 10.4
-WPOST_XY = ((-30.0, 20.0), (-30.0, 34.0))
-NOTCH_W = 3.2                              # notch width (Y) for the tie
-NOTCH_Z0, NOTCH_Z1 = 3.0, 5.0              # notch band (2.0 tall)
+# Wire bar (v7, west wiring channel): a low FLAT wall — NO cylinders — with
+# two zip-tie through-slots (band-split in Z, like the old wire-post notch).
+# A zip tie threads a slot and cinches the harness against the bar. Tops out
+# at Z 8.0, well below the left USB window (Z 17.0); Y 6..30 clears the
+# speaker flange (Y <= 0) by 6.0 and the (-39,+39) boss by 5.5. It underlies
+# the ports-left board footprint in plan but sits 8.0 below the board
+# underside (16.0), so it never obstructs seating in either orientation.
+WBAR_X0, WBAR_X1 = -38.0, -36.0            # 2.0 thick, inner face X=-36.0
+WBAR_Y0, WBAR_Y1 = 6.0, 30.0               # 24 long along Y
+WBAR_Z1 = 8.0                              # bar top
+WSLOT_W = 3.2                              # zip-tie slot width (in Y)
+WSLOT_YS = (12.0, 24.0)                    # two slots centered here
+WSLOT_Z0, WSLOT_Z1 = 3.0, 5.0              # slot band (2.0 tall)
 
 # reach of the wall-opening cutters: from inside any wall to past the outside
 CUT_IN, CUT_OUT = HALF - 4.0, HALF + 1.0   # 41 .. 46
@@ -249,7 +274,12 @@ def build():
     m += pl.prism(outer.difference(thru), FEET_DEPTH, pl.FLOOR)
 
     # -- walls: two columns of Z bands; cut bands stretch OVL into solid
-    #    neighbours, solid neighbours' caps define the exact opening edges --
+    #    neighbours, solid neighbours' caps define the exact opening edges.
+    #    v7: the ledge (33.5) is now ABOVE the window top (23.5), so BOTH
+    #    columns close the window at WIN_Z1 with a solid cap and run solid up
+    #    to their tops — the liner to the ledge (LEDGE_Z), the outer skin to
+    #    TRAY_H. (In v6 the ledge sat inside the window, so the liner's window
+    #    ceiling WAS the ledge; that special case is gone.) --
     for ring, top in ((ring_thin, pl.TRAY_H), (ring_liner, pl.LEDGE_Z)):
         # 2.2..17.0   solid (top cap = USB window floor at 17.0)
         m += pl.prism(ring, pl.FLOOR - OVL, WIN_Z0)
@@ -259,16 +289,11 @@ def build():
         #             at 19.4/20.9 come from the solid caps around it)
         m += pl.prism(ring.difference(win).difference(mics),
                       MIC_Z0 - OVL, MIC_Z1 + OVL)
-        if ring is ring_thin:
-            # 20.9..23.7  - window  (bottom cap = mic ceiling at 20.9)
-            m += pl.prism(ring.difference(win), MIC_Z1, WIN_Z1 + OVL)
-            # 23.5..28.0  solid (bottom cap = window ceiling at 23.5)
-            m += pl.prism(ring, WIN_Z1, pl.TRAY_H)
-        else:
-            # 20.9..21.5  - window: bottom cap = mic ceiling at 20.9, top
-            #             cap = the skirt-seat LEDGE face at 21.5 (the
-            #             window's liner ceiling IS the ledge plane)
-            m += pl.prism(ring.difference(win), MIC_Z1, top)
+        # 20.9..23.7  - window  (bottom cap = mic ceiling at 20.9)
+        m += pl.prism(ring.difference(win), MIC_Z1, WIN_Z1 + OVL)
+        # 23.5..top   solid (bottom cap = window ceiling at 23.5; top is the
+        #             ledge for the liner, TRAY_H for the outer skin)
+        m += pl.prism(ring, WIN_Z1, top)
 
     # -- corner bosses: solid pedestal + insert-bore ring ------------------
     for sx in (-1, 1):
@@ -281,30 +306,37 @@ def build():
                           BOSS_SOLID_TOP - OVL, BOSS_TOP)
 
     # -- board bay: two side-wall shelves (tabs off the walls, 0.2 radial lap
-    #    into the liner), two mid-span ribs, 4 locator posts ---------------
+    #    into the liner) + two mid-span ribs (all flat seats to Z=16.0) -----
     for sx in (-1, 1):
         m += pl.prism(box(min(sx * SHELF_X0, sx * SHELF_X1), -SHELF_Y,
                           max(sx * SHELF_X0, sx * SHELF_X1), SHELF_Y),
                       SHELF_Z0, pl.BOARD_Z)
     for rx0, rx1 in RIB_X:
         m += pl.prism(box(rx0, RIB_Y0, rx1, RIB_Y1), pl.FLOOR - OVL, pl.BOARD_Z)
-    for x, y in POST_XY:
-        m += pl.prism(affinity.translate(pl.circle(POST_D), x, y),
-                      pl.FLOOR - OVL, POST_TOP)
+
+    # -- FLAT board cage (no cylinders): back guide rail (+Y edge) + two front
+    #    corner tabs (-Y corners). Inner faces 0.1 off a 30-wide board. -----
+    m += pl.prism(box(-BACK_RAIL_XW, CAGE_Y_IN, BACK_RAIL_XW, CAGE_Y_OUT),
+                  pl.FLOOR - OVL, CAGE_Z1)
+    for sx in (-1, 1):
+        m += pl.prism(box(min(sx * TAB_X0, sx * TAB_X1), -CAGE_Y_OUT,
+                          max(sx * TAB_X0, sx * TAB_X1), -CAGE_Y_IN),
+                      pl.FLOOR - OVL, CAGE_Z1)
 
     # -- amp pocket ridges (MAX98357A drops between them) ------------------
     m += pl.prism(amp_ridges(), pl.FLOOR - OVL, pl.FLOOR + AMP_RIDGE_H)
 
-    # -- wire posts with zip-tie through-notches (band-split in Z) ---------
-    for x, y in WPOST_XY:
-        c = affinity.translate(pl.circle(WPOST_D), x, y)
-        notch = box(x - WPOST_D, y - NOTCH_W / 2, x + WPOST_D, y + NOTCH_W / 2)
-        # 2.2..3.0  solid (top cap = notch floor at 3.0)
-        m += pl.prism(c, pl.FLOOR - OVL, NOTCH_Z0)
-        # 2.8..5.2  - notch (two side slivers; exact edges from the caps)
-        m += pl.prism(c.difference(notch), NOTCH_Z0 - OVL, NOTCH_Z1 + OVL)
-        # 5.0..10.4 solid (bottom cap = notch ceiling at 5.0)
-        m += pl.prism(c, NOTCH_Z1, pl.FLOOR + WPOST_H)
+    # -- FLAT wire bar with two zip-tie through-slots (band-split in Z) ----
+    bar = box(WBAR_X0, WBAR_Y0, WBAR_X1, WBAR_Y1)
+    slots = unary_union([box(WBAR_X0 - 1.0, y - WSLOT_W / 2,
+                             WBAR_X1 + 1.0, y + WSLOT_W / 2)   # cut through in X
+                         for y in WSLOT_YS])
+    # 2.2..3.0  solid (top cap = slot floor at 3.0)
+    m += pl.prism(bar, pl.FLOOR - OVL, WSLOT_Z0)
+    # 2.8..5.2  - slots (bar segments; exact slot edges from the caps)
+    m += pl.prism(bar.difference(slots), WSLOT_Z0 - OVL, WSLOT_Z1 + OVL)
+    # 5.0..8.0  solid (bottom cap = slot ceiling at 5.0)
+    m += pl.prism(bar, WSLOT_Z1, WBAR_Z1)
 
     return [("tray", m, pl.COLORS["tray"])]
 

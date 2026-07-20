@@ -38,22 +38,23 @@ ROW_Y = [1.5 * PITCH, 0.5 * PITCH, -0.5 * PITCH, -1.5 * PITCH]
 
 CASE_W = 90.0
 CASE_R = 8.0
-TRAY_H = 28.0
+TRAY_H = 40.0          # v7: taller/fatter case (+12 over v6's 28) — lots of
+#                        open headroom above the board (~24 mm now)
 WALL = 2.4
 FLOOR = 2.4
-LEDGE_Z = 21.5         # above this the tray wall thins to 1.2 (skirt seat)
+LEDGE_Z = 33.5         # above this the tray wall thins to 1.2 (skirt seat)
 BOSS_XY = 39.0         # corner boss / screw centers at (+-39, +-39)
-PLATE_Z0, PLATE_Z1 = 28.0, 29.5
+PLATE_Z0, PLATE_Z1 = 40.0, 41.5
 MX_CUT = 14.1
 KNOB_HOLE_D = 7.4
-CAP_Z0 = 35.0          # assembled: keycap bottom face height
-KNOB_Z0 = 30.5
+CAP_Z0 = 47.0          # assembled: keycap bottom face height
+KNOB_Z0 = 42.5
 
 # v4 fat-base component bay (SPEC.md "Tray"): dual-USB-C ESP32-S3 clone board
 # with factory pin headers (pins DOWN, components + USB-C on TOP), down-firing
 # cavity speaker under the board, MAX98357A amp, round I2S mic.
 BOARD_Z = 16.0         # board underside height (shelf/bridge top faces)
-BOARD_W = 30.0         # board max width  (X, caged by the locator posts)
+BOARD_W = 30.0         # board width in Y (|y|<=15; caged by the flat cage)
 BOARD_L = 64.0         # board max length (Y, back edge at Y=+42.0)
 USB_WIN = (26.0, 17.0, 23.5)   # back-wall USB window: (width, z0, z1), X=0
 SPK_CENTER = (0.0, -21.0)      # speaker center (flange ON the floor)

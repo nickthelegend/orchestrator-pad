@@ -128,7 +128,7 @@ constant in [`SPEC.md`](SPEC.md) if yours runs tight.
 
 | Qty | Part | Notes |
 |---|---|---|
-| 1 | **ESP32-S3 dev board** (WROOM-1, dual USB-C clones welcome) | factory pin headers are fine — the board rides shelves + ribs with 13.6 mm of pin/jumper clearance underneath; install it ports-**right** or ports-**left** (both side walls have a window) |
+| 1 | **ESP32-S3 dev board** (WROOM-1, dual USB-C clones welcome) | factory pin headers are fine — the board rides flat shelves + ribs (no posts in the way), with ~24 mm of open headroom above it; install it ports-**right** or ports-**left** (both side walls have a window) |
 | 14 | MX-style switches (3-pin plate-mount, donor-board pulls work) | 13 × 1u + 1 for the 2u voice bar; they clip into the plate's square holes exactly like a stock keyboard plate |
 | 1 | **4Ω 3W cavity speaker**, flange up to 72 × 42 mm | down-firing bay in the floor: grille slots + 4 × M2.5 self-tapper pilots |
 | 1 | **MAX98357A I2S amp** breakout | drops into the corner pocket, foam-tape mounted |
@@ -136,7 +136,7 @@ constant in [`SPEC.md`](SPEC.md) if yours runs tight.
 | 1 | EC11 rotary encoder | M7 bush mounts in the plate; 15 mm D-shaft; the knob hides the nut |
 | 4 | M3 heat-set inserts + **M3×8** button-head screws | tray bosses ← plate counterbores |
 | 4 | rubber feet, **≥3 mm tall** | give the down-firing speaker its air gap |
-| — | zip ties, jumper wires | wire posts with zip-tie notches are printed into the tray |
+| — | zip ties, jumper wires | a flat wire bar with zip-tie slots is printed into the tray (no posts in the way) |
 | — | optional: WS2812 LEDs | under the preset key |
 
 <div align="center">
@@ -194,7 +194,8 @@ cd cad
 - [x] v3 — Grok + Codex keys (seven agents), two-color legend infills (`legends-all.stl`) (branch [`v3`](../../tree/v3))
 - [x] v4 — the fat base: 28 mm component bay with a down-firing speaker bay, amp pocket, board bridge with header-pin clearance, dual-USB-C window, and zip-tie wire posts
 - [x] v5 — donor-style switch sockets + the flat-printed **switch deck** (footprint sheet, pins protrude 2.1 mm for direct soldering; zero bridges/supports on the plate) (branch [`v5`](../../tree/v5))
-- [x] **v6 (current)** — USB moved to the **side walls**: the board bay is rotated and reversible, so the cable exits right or left (the unused window is a wire pass-through)
+- [x] v6 — USB moved to the **side walls**: the board bay is rotated and reversible, so the cable exits right or left (branch [`v6`](../../tree/v6))
+- [x] **v7 (current)** — **fatter**: 40 mm case with ~24 mm of open headroom above the board, and the cylindrical locator/wire posts replaced with flat guide rails + zip-tie slots (nothing free-standing in the bay)
 - [ ] `firmware/` — ESP-IDF: matrix scan, encoder detents, hold-to-talk ring
       buffer, WebSocket client, USB-HID fallback
 - [ ] daemon reference handler + pairing flow
