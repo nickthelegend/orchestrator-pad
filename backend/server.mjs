@@ -97,8 +97,11 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const started = Date.now();
 
-  // Gate everything behind the shared secret when one is configured.
-  if (!tokenOk(req)) {
+  // Gate everything behind the shared secret when one is configured — except
+  // /health, which must stay open so connectivity checks (the Loom app's
+  // "LoomPad" pill, load balancers) can see the backend is up without the token.
+  const isHealth = req.method === "GET" && url.pathname === "/health";
+  if (!isHealth && !tokenOk(req)) {
     console.warn(`  ✗ 401 ${req.method} ${url.pathname} from ${req.socket.remoteAddress}`);
     return void json(res, 401, { error: "unauthorized" });
   }
