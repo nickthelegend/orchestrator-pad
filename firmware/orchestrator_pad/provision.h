@@ -9,14 +9,13 @@
 // On boot we try the saved WiFi. If there's none (first run) or it won't join,
 // the pad raises the "LoomPad-Setup" access point and serves a portal: connect
 // a phone/laptop to it and a page pops up (captive) listing the WiFi networks
-// around you, plus fields for the Loom backend IP + telnet port. Save, and the
+// around you, plus fields for the Loom backend URL + pad token. Save, and the
 // pad joins your WiFi and remembers everything in flash — so this only happens
 // once (or after a reset). autoConnect() blocks here until it's connected, which
 // is why the portal parameters can live on the stack.
 class Provision {
 public:
-  // Returns true once WiFi is connected. `portalColour` (optional) is a callback
-  // the caller uses to light the status LED while the portal is open.
+  // Returns true once WiFi is connected (blocks in the portal until then).
   bool run(Settings &s) {
     // Two fields: where the backend lives, and the secret to reach it. The URL's
     // scheme picks the transport — http://<mac-ip>:8080 on the LAN, or a
