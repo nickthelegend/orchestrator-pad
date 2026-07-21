@@ -82,16 +82,35 @@ void stopAndSend() {
 }
 
 // ── keys ─────────────────────────────────────────────────────────────────────
+// Friendly spoken form of an agent id (the caps read better out loud).
+String spokenName(const String &id) {
+  if (id == "claude-code") return "Claude";
+  if (id == "grok-code")   return "Grok";
+  if (id == "opencode")    return "Open Code";
+  if (id == "antigravity") return "Antigravity";
+  if (id == "codex")       return "Codex";
+  if (id == "kiro")        return "Kiro";
+  return id;
+}
+
 void selectAgent(const KeyBind &kb) {
   selAgent = kb.agent;
   selR = kb.r; selG = kb.g; selB = kb.b;
   led(selR, selG, selB);
   telnet.logf("  ▸ selected %s\n", selAgent.c_str());
-  if (!net.select(selAgent)) telnet.logf("    (select didn't reach the backend)\n");
+  // Lock it in the backend, then say the name aloud. Only speak if the select
+  // reached the backend (else net.speak would stall waiting on a dead server).
+  if (net.select(selAgent))
+    net.speak(String("Selected ") + spokenName(selAgent), audio);
+  else
+    telnet.logf("    (select didn't reach the backend)\n");
 }
 
 void onKey(uint8_t r, uint8_t c, bool pressed) {
   const KeyBind &kb = keyAt(r, c);
+  if (pressed)   // diagnostic: raw position + current mapping, for remapping the KEYMAP
+    telnet.logf("  [KEY] row=%u col=%u  currently=%s\n", r, c,
+                kb.role == ROLE_MIC ? "MIC" : (kb.agent ? kb.agent : "unbound"));
   if (kb.role == ROLE_MIC) {
     if (pressed) startRecording();
     else         stopAndSend();
@@ -106,7 +125,7 @@ void onKey(uint8_t r, uint8_t c, bool pressed) {
 void onTelnetCommand(const String &line) {
   String cmd = line; cmd.toLowerCase();
   if (cmd == "help") {
-    telnet.println("help · status · ip · heap · agent · select <a> · say <t> · talk · reset-wifi · reboot");
+    telnet.println("help · status · ip · heap · agent · select <a> · say <t> · talk · url <u> · token <t> · reset-wifi · reboot");
   } else if (cmd == "status") {
     telnet.logf("wifi %s  ip %s  rssi %ddBm  heap %u  psram %u\n",
                 WiFi.isConnected() ? "up" : "down", WiFi.localIP().toString().c_str(),
@@ -132,6 +151,21 @@ void onTelnetCommand(const String &line) {
   } else if (cmd == "talk") {
     telnet.logf("hands-free talk (%dms)…\n", TELNET_TALK_MS);
     startRecording(TELNET_TALK_MS);
+  } else if (cmd.startsWith("url ")) {
+    String u = line.substring(4); u.trim();          // original case — URLs matter
+    settings.set(u.c_str(), settings.padToken);      // repoint backend, keep token + WiFi
+    telnet.logf("backend URL → %s\n", settings.backendUrl);
+    String brain;
+    if (net.health(brain)) {
+      telnet.logf("  ✓ reachable (brain=%s)\n", brain.c_str());
+      net.speak("Backend connected.", audio);
+    } else {
+      telnet.logf("  ✗ not reachable yet — check the IP/port and that the backend is running\n");
+    }
+  } else if (cmd.startsWith("token ")) {
+    String t = line.substring(6); t.trim();
+    settings.set(settings.backendUrl, t.c_str());
+    telnet.logf("pad token %s\n", t.length() ? "set" : "cleared");
   } else if (cmd == "reset-wifi") {
     telnet.println("wiping WiFi + settings, rebooting into the portal…");
     provision.resetWifi(); Settings::erase();
@@ -195,7 +229,7 @@ void setup() {
   String brain;
   if (net.health(brain)) {
     Serial.printf("backend ok (brain=%s)\n", brain.c_str());
-    if (!net.speak("Orchestrator pad connected.", audio)) audio.beep(1320, 120);
+    if (!net.speak("Loom pad connected.", audio)) audio.beep(1320, 120);
   } else {
     Serial.println("!! backend not reachable — check the IP in the portal (reset-wifi to change)");
     audio.beep(880, 60); audio.beep(660, 120);   // fell-back chime

@@ -9,7 +9,10 @@
 // ---- 4×4 matrix ----
 #define MATRIX_ROWS 4
 #define MATRIX_COLS 4
-static const uint8_t ROW_PINS[MATRIX_ROWS] = {10, 11, 12, 13};
+// Row pins are listed bottom-to-top to match how this unit is physically held
+// (the matrix reads flipped top-to-bottom otherwise — "180° upwards"). If your
+// build reads mirrored, reverse this back to {10,11,12,13}.
+static const uint8_t ROW_PINS[MATRIX_ROWS] = {13, 12, 11, 10};
 static const uint8_t COL_PINS[MATRIX_COLS] = {14,  8, 17, 18};
 
 // ---- Mic: INMP441 (I2S RX) ----   VDD→3V3, GND→GND, L/R→GND
@@ -29,7 +32,7 @@ static const uint8_t COL_PINS[MATRIX_COLS] = {14,  8, 17, 18};
 // ---- The push-to-talk key (row/col). Also the "reset provisioning" key: hold
 //      it while powering on to wipe saved WiFi and re-open the portal. ----
 #define TALK_ROW 0
-#define TALK_COL 0                  // K1
+#define TALK_COL 2                  // mic key's RAW matrix position (K13, mirrored → row0/col2)
 
 // ---- Backend URL default (editable in the captive portal, saved to NVS) ----
 // LAN:    http://<your-mac-ip>:8080
