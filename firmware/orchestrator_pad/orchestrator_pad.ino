@@ -134,6 +134,17 @@ void onTelnetCommand(const String &line) {
                 settings.backendUrl, settings.secure() ? "https" : "http",
                 settings.padToken[0] ? "set" : "none",
                 selAgent.length() ? selAgent.c_str() : "(none)");
+  } else if (cmd == "map") {
+    for (uint8_t r = 0; r < MATRIX_ROWS; r++) {
+      char line[128] = "";
+      for (uint8_t c = 0; c < MATRIX_COLS; c++) {
+        const KeyBind &k = keyAt(r, c);
+        const char *nm = (k.role == ROLE_MIC) ? "MIC" : (k.agent ? k.agent : "-");
+        strncat(line, nm, sizeof(line) - strlen(line) - 4);
+        strncat(line, " | ", sizeof(line) - strlen(line) - 1);
+      }
+      telnet.logf("  r%u: %s\n", r, line);
+    }
   } else if (cmd == "ip") {
     telnet.println(WiFi.localIP().toString());
   } else if (cmd == "heap") {

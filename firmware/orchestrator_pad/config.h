@@ -9,11 +9,8 @@
 // ---- 4×4 matrix ----
 #define MATRIX_ROWS 4
 #define MATRIX_COLS 4
-// Row pins are listed bottom-to-top to match how this unit is physically held
-// (the matrix reads flipped top-to-bottom otherwise — "180° upwards"). If your
-// build reads mirrored, reverse this back to {10,11,12,13}.
-static const uint8_t ROW_PINS[MATRIX_ROWS] = {13, 12, 11, 10};
-static const uint8_t COL_PINS[MATRIX_COLS] = {14,  8, 17, 18};
+static const uint8_t ROW_PINS[MATRIX_ROWS] = {10, 11, 12, 13};
+static const uint8_t COL_PINS[MATRIX_COLS] = {18, 17, 8, 14};  // columns reversed to match the wiring
 
 // ---- Mic: INMP441 (I2S RX) ----   VDD→3V3, GND→GND, L/R→GND
 #define MIC_SCK 5
