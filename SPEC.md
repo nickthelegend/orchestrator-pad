@@ -203,19 +203,25 @@ Total: **14 MX switches** (13 x 1u + 1 x 2u), 1 EC11 encoder.
   colors per key live in `partlib.key_layout()` (white on colored caps, dark
   gray on white caps).
 
-### Knob — `part_knob.py`
+### Knob — `part_knob.py` (v7.1 MOCK, no potentiometer)
 - Ø17.0, height 15.0. Knurl: 24 flutes (Ø1.6 scallops on the rim).
 - Top: 1.5 chamfer loft to Ø16.0, tick-dot deboss near edge.
-- Nut recess: **Ø12.6 x 2.4** counterbore in the bottom face, concentric with
-  the bore — swallows the EC11 M7 panel nut (~Ø11.5 across corners x 2.2)
-  sitting on the plate.
-- Bore: EC11 D-shaft — Ø6.1 with flat at 4.6, blind, above the recess to
-  z 12.0 (3.0 ceiling).
+- **Snap-fit peg** on the underside — no EC11 shaft: a Ø**7.2** tube split by
+  1.2-wide cross-slots into 4 flex fingers, hollow Ø4.6 core, with a Ø**8.2**
+  barb at the tip and a stepped lead-in chamfer. Push it through the plate's
+  Ø7.4 hole: the fingers compress, the barb springs out under the plate. The
+  knob body rests on the plate top (Z 41.5) and the barb catches the
+  underside (ledge Z 39.8, **0.2 axial play** below the plate bottom) so it
+  stays on **and spins freely** — a display dial for the demo. The plate is
+  identical to an EC11 build; only this part differs. **Tuning:** if the snap
+  is too tight, drop `BARB_D` to 8.0; too loose, raise to 8.4.
+- Prints **crown-DOWN** (peg pointing up) — no supports.
 
 ## Assembly (`assembly.py`)
 - Tray at Z0 → plate on top (plate top face Z=41.5).
 - Caps: bottom face at **Z=47.0** (switch seated, cap floats ~5.5 over plate).
-- Knob: bottom at **Z=42.5** over r0c0 (M7 nut hidden in the recess).
+- Knob: bottom at **Z=41.5** over r0c0 (rests on the plate top; snap peg
+  clips through the Ø7.4 hole and spins).
 - Exports: `exports/orchestrator-pad-assembled.glb`, `exports/orchestrator-pad-exploded.glb`
   (tray +0 / plate +20 / caps +40 / knob +52), plus one STL per printable part
   (`tray`, `plate`, `caps-all`, `legends-all`, `knob`).
@@ -240,8 +246,9 @@ along X with its ports facing a side wall, and you choose **ports-right or
 ports-left** at assembly time — the bay is symmetric, so both drop in the
 same way. Also: MAX98357A I2S amp breakout, 4Ω 3W
 cavity speaker (flange ≤ 72 x 42, driver bump ≤ 11 tall — **measure it**)
-+ 4 x **M2.5x6** self-tappers, round I2S mic module (INMP441-class), EC11
-encoder (M7 bush) + this knob, 14 x MX-style switches (donor-harvested
++ 4 x **M2.5x6** self-tappers, round I2S mic module (INMP441-class),
+**no potentiometer** (this build is hold-to-talk; the knob is a mock display
+dial that snaps into the plate — omit the EC11), 14 x MX-style switches (donor-harvested
 3-pin white MX clones fine), 4 x M3 heat-set inserts + **M3x8** button-head
 screws (unchanged in v7: head bears at Z 40.7 under the counterbore, tip at
 Z 32.7 vs the bore floor 31.5 — margin **+1.2**, and it still reaches the
@@ -256,6 +263,7 @@ supports (the **two** 26 mm bridges over the side USB windows and the
 **two** 1.6 shelf tabs print unsupported; the mid-span ribs, the flat board
 cage — back rail + 2 front tabs — and the flat wire bar are all plain walls
 off the floor). Caps upside down (top face on bed) or with tree supports;
-knob upright. Case is ~41.5 tall; with caps ≈ 54.5 overall (knob crown at
+**knob crown-down** (snap peg pointing up, prints support-free). Case is
+~41.5 tall; with caps ≈ 54.5 overall (knob crown at
 57.5). Every part = union of closed shells; slicers merge
 coplanar/overlapping shells.

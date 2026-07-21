@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
+
+# secrets / backups (never commit real keys)
+*.bak
+.env

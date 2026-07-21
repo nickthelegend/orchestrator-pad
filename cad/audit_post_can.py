@@ -445,14 +445,13 @@ print(f"  M3x8: head Z {head_z:.1f}, tip Z {tip_z:.1f}, bore floor Z "
       f"{floor_z:.1f} (margin {tip_z - floor_z:+.1f}), insert zone top "
       f"{pt.BOSS_TOP:.1f} {check('screw stack', tip_z >= floor_z and tip_z <= pt.BOSS_TOP - 3)}")
 
-free = pk.NUT_DEPTH - 0.2                         # 2.2 under the D-band
-nut_top = pl.PLATE_Z1 + NUT_H                     # 43.7 (v7)
-ceil_w = pl.KNOB_Z0 + free                        # 44.7 (v7)
-print(f"  EC11 nut Ø{NUT_AF} x {NUT_H} vs recess Ø{pk.NUT_D} x {free:.1f} free: "
-      f"radial {(pk.NUT_D - NUT_AF) / 2:.2f}, nut top Z {nut_top:.1f} vs recess "
-      f"ceiling Z {ceil_w:.1f} {check('nut recess swallows nut', pk.NUT_D >= NUT_AF + 0.8 and ceil_w >= nut_top)}")
-print(f"  knob bottom rests at Z {pl.KNOB_Z0} "
-      f"{check('knob bottom at 42.5', pl.KNOB_Z0 == 42.5)}")
+# mock snap-fit knob (no potentiometer): peg spins in the hole, barb retains
+barb_ledge = pl.KNOB_Z0 + pk.LEDGE_Z             # 39.8
+play = pl.PLATE_Z0 - barb_ledge                  # 0.2 axial play
+print(f"  mock knob: peg Ø{pk.PEG_D} < hole Ø{pl.KNOB_HOLE_D} (spins), "
+      f"barb Ø{pk.BARB_D} > hole (snaps), rests on plate top {pl.PLATE_Z1}, "
+      f"barb ledge Z {barb_ledge:.1f} vs plate bottom {pl.PLATE_Z0} (play {play:.1f}) "
+      f"{check('mock knob clips + spins', pk.PEG_D < pl.KNOB_HOLE_D and pk.BARB_D > pl.KNOB_HOLE_D + 0.3 and pl.KNOB_Z0 == pl.PLATE_Z1 and 0.0 <= play <= 0.6)}")
 
 print("\n=== G. watertight (every mesh) ===")
 wt_all = True
@@ -508,9 +507,11 @@ rows = [
     (f"M3x8 stack: head {head_z:.1f} / tip {tip_z:.1f} / bore floor {floor_z:.1f} "
      f"(margin {tip_z - floor_z:+.1f}, insert top {pt.BOSS_TOP:.1f})",
      tip_z >= floor_z and tip_z <= pt.BOSS_TOP - 3),
-    (f"EC11 body (bottom {ec_bot:.1f}) clear of board (lateral {d_ec:.1f}); "
-     f"nut swallowed; knob at Z {pl.KNOB_Z0}",
-     (d_ec >= 0.5) and ceil_w >= nut_top and pl.KNOB_Z0 == 42.5),
+    (f"mock knob clips into the Ø{pl.KNOB_HOLE_D} plate hole + spins (peg "
+     f"Ø{pk.PEG_D}/barb Ø{pk.BARB_D}, {play:.1f} play); body clear of board "
+     f"(lateral {d_ec:.1f})",
+     (d_ec >= 0.5) and pk.PEG_D < pl.KNOB_HOLE_D and pk.BARB_D > pl.KNOB_HOLE_D + 0.3
+     and pl.KNOB_Z0 == pl.PLATE_Z1 and 0.0 <= play <= 0.6),
     ("speaker floor: slots+pilots open, grille bars + feet-recess layers intact",
      not [f for f in FAILURES if f in (
          'slots open', 'grille bars', 'pilots open', 'feet-recess layers intact')]),

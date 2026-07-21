@@ -1,16 +1,16 @@
 {
-  "generated": "2026-07-20T22:26:27+00:00",
+  "generated": "2026-07-21T13:05:41+00:00",
   "files": [
     {
       "path": "exports/orchestrator-pad-assembled.glb",
-      "bytes": 6209508,
-      "triangles": 73616,
+      "bytes": 6146020,
+      "triangles": 72860,
       "watertight": true
     },
     {
       "path": "exports/orchestrator-pad-exploded.glb",
-      "bytes": 6209484,
-      "triangles": 73616,
+      "bytes": 6145992,
+      "triangles": 72860,
       "watertight": true
     },
     {
@@ -45,15 +45,15 @@
     },
     {
       "path": "exports/knob.stl",
-      "bytes": 213484,
-      "triangles": 4268,
+      "bytes": 175684,
+      "triangles": 3512,
       "watertight": true
     }
   ],
   "totals": {
     "files": 8,
-    "bytes": 16100296,
-    "triangles": 220848,
+    "bytes": 15935516,
+    "triangles": 218580,
     "watertight": true
   },
   "items": [
@@ -276,9 +276,9 @@
     },
     {
       "name": "knob",
-      "triangles": 4268,
-      "shells": 5,
-      "volume_mm3": 2893.92,
+      "triangles": 3512,
+      "shells": 20,
+      "volume_mm3": 3416.06,
       "watertight": true
     }
   ],

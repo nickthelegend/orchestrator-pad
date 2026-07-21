@@ -110,7 +110,7 @@ press an agent key, hold the mic, talk.
 | Switch deck | [`exports/switch-deck.stl`](exports/switch-deck.stl) | as exported, flat on bed | none |
 | Keycaps ×14 | [`exports/caps-all.stl`](exports/caps-all.stl) | **flip 180°** — cap tops on bed | none |
 | Legend infills ×14 | [`exports/legends-all.stl`](exports/legends-all.stl) | import **with** caps-all, flip together | none |
-| Dial knob | [`exports/knob.stl`](exports/knob.stl) | upright | none |
+| Dial knob | [`exports/knob.stl`](exports/knob.stl) | as exported (crown-down) | none |
 
 0.4 mm nozzle · 0.2 mm layers · PETG or PLA. Slow the first layer and outer
 walls for crisp glyphs. Each STL is a union of individually watertight
@@ -141,6 +141,16 @@ Assembly: clip the switches into the plate, then press the deck up onto
 them from below — it friction-fits on the center posts and 5-pin legs and
 seats against the socket-wall rims. The metal pins stick out **2.1 mm**
 through the deck: flow solder on, run your matrix wire, done.
+
+**The dial is a mock — it just clips in.** No potentiometer in this build, so
+the knob has a snap-fit peg instead of an encoder bore: push it through the
+plate's Ø7.4 hole and it clicks under the plate and **spins freely** — a
+display dial you can twist for the demo. The plate is unchanged, so it's a
+knob-only reprint.
+
+<div align="center">
+<img src="docs/images/knob-clip.png" alt="Mock knob with snap-fit peg clipping into the plate's dial hole" width="560">
+</div>
 
 Tolerances assume a reasonably tuned printer; every clearance is a named
 constant in [`SPEC.md`](SPEC.md) if yours runs tight.

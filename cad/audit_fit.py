@@ -149,36 +149,31 @@ clr = pl.CAP_Z0 - 4.0 - pl.PLATE_Z1
 print(f"cap bottom after 4mm travel vs plate top: {clr:.2f}",
       check("travel clearance", clr >= 1.2))
 
-# ------------------------------------------------------------- 4. EC11 ------
-sec("4. EC11 knob/plate/board")
+# ---------------------------------------------- 4. mock snap-fit knob ------
+sec("4. mock snap-fit knob (no potentiometer)")
 print("plate knob hole d:", pl.KNOB_HOLE_D, check("knob hole 7.4", pl.KNOB_HOLE_D == 7.4))
-print("bore profile:", part_knob.BORE_D, part_knob.BORE_FLAT,
-      check("D-bore 6.1/4.6", (part_knob.BORE_D, part_knob.BORE_FLAT) == (6.1, 4.6)))
-print("knob bottom vs plate top:", round(pl.KNOB_Z0 - pl.PLATE_Z1, 2),
-      check("knob floats over plate", pl.KNOB_Z0 - pl.PLATE_Z1 > 0))
-print(f"effective bore depth: {part_knob.CEIL_Z0:.1f} (spec 12.0, ceiling overlap eats 0.2)")
-free = part_knob.NUT_DEPTH - 0.2
-nut_top = pl.PLATE_Z1 + NUT_H
-recess_ceiling = pl.KNOB_Z0 + free
-print(f"nut recess Ø{part_knob.NUT_D} x {free:.1f} free vs nut Ø{NUT_AF} x {NUT_H}: "
-      f"radial {(part_knob.NUT_D - NUT_AF) / 2:.2f}, nut top Z{nut_top:.1f} vs "
-      f"recess ceiling Z{recess_ceiling:.1f} "
-      f"{check('nut swallowed', part_knob.NUT_D >= NUT_AF + 0.8 and recess_ceiling >= nut_top)}")
-# EC11 body hangs below the plate into the bay — must clear the board
-ec_bot = pl.PLATE_Z0 - EC11_BODY_DEPTH                  # 33.0 (v7: +12)
-ec_body = affinity.translate(
-    box(-EC11_BODY_SQ / 2, -EC11_BODY_SQ / 2, EC11_BODY_SQ / 2, EC11_BODY_SQ / 2),
-    *pl.KNOB_POS)
-d_ec_brd = ec_body.distance(BRD_ANY)   # worst case over BOTH orientations
-print(f"EC11 body bottom Z {ec_bot:.1f} (plate bottom {pl.PLATE_Z0} - {EC11_BODY_DEPTH}); "
-      f"lateral gap to board (either orientation) {d_ec_brd:.2f} (board top {BRD_TOP:.1f}) "
-      f"{check('EC11 body clear of board', d_ec_brd >= 0.5 or ec_bot - BRD_TOP >= 0.5)}")
-tray_liner_in = pl.rounded_rect(pl.CASE_W - 2 * pl.WALL, pl.CASE_W - 2 * pl.WALL,
-                                pl.CASE_R - pl.WALL)
-print(f"EC11 body vs tray liner wall: gap "
-      f"{tray_liner_in.exterior.distance(ec_body):.2f} (contained: "
-      f"{tray_liner_in.contains(ec_body)}) "
-      f"{check('EC11 body inside interior', tray_liner_in.contains(ec_body))}")
+# the peg shaft must clear the hole (spins); the barb must exceed it (snaps)
+print(f"peg shaft Ø{part_knob.PEG_D} vs hole Ø{pl.KNOB_HOLE_D}: "
+      f"{(pl.KNOB_HOLE_D - part_knob.PEG_D) / 2:.2f}/side clearance "
+      f"{check('peg spins in hole', part_knob.PEG_D < pl.KNOB_HOLE_D)}")
+print(f"barb Ø{part_knob.BARB_D} vs hole Ø{pl.KNOB_HOLE_D}: "
+      f"{(part_knob.BARB_D - pl.KNOB_HOLE_D) / 2:.2f}/side catch "
+      f"{check('barb catches under plate', part_knob.BARB_D > pl.KNOB_HOLE_D + 0.3)}")
+# grip: knob bottom rests on the plate top; the barb ledge sits below the
+# plate bottom by |LEDGE_Z| - PLATE_T -> a small axial play so it turns.
+knob_bottom = pl.KNOB_Z0                                 # 41.5 = plate top
+barb_ledge = pl.KNOB_Z0 + part_knob.LEDGE_Z              # 39.8
+play = pl.PLATE_Z0 - barb_ledge                          # 0.2 (barb below plate bottom)
+print(f"knob bottom Z {knob_bottom:.1f} (plate top {pl.PLATE_Z1}); "
+      f"barb ledge Z {barb_ledge:.1f} vs plate bottom {pl.PLATE_Z0}: "
+      f"axial play {play:.2f} "
+      f"{check('knob rests on plate, barb retains', abs(knob_bottom - pl.PLATE_Z1) < 1e-9 and 0.0 <= play <= 0.6)}")
+# the barb must clear the switch deck below (deck top well under the peg tip)
+peg_tip = pl.KNOB_Z0 + (part_knob.LEDGE_Z - 0.9)         # 38.9
+deck_top = pl.PLATE_Z1 - part_plate.SOCKET_SEAT_DROP     # 36.5 (deck seat)
+print(f"peg tip Z {peg_tip:.1f} vs switch-deck top {deck_top:.1f}: "
+      f"clr {peg_tip - deck_top:.2f} (deck also has a {part_plate.KNOB_CUT_W} cutout here) "
+      f"{check('peg clears deck', peg_tip - deck_top >= 0.5)}")
 
 # --------------------------------------------------- 5. skirt vs tray fit ----
 sec("5. plate skirt vs tray (recompute)")
@@ -443,7 +438,8 @@ print(f"slots vs feet recesses: distance {d_slot_feet:.2f} "
 pilots = [Point(x, y) for x, y in part_tray.SPK_PILOT_XY]
 print(f"pilots Ø{part_tray.SPK_PILOT_D} THROUGH the floor at "
       f"{part_tray.SPK_PILOT_XY} (63 x 33 pattern)")
-liner_in = tray_liner_in
+liner_in = pl.rounded_rect(pl.CASE_W - 2 * pl.WALL, pl.CASE_W - 2 * pl.WALL,
+                           pl.CASE_R - pl.WALL)
 pilot_ok = all(liner_in.contains(p.buffer(part_tray.SPK_PILOT_D / 2)) for p in pilots)
 print(f"pilots inside the floor interior: {pilot_ok} "
       f"{check('pilots inside floor', pilot_ok)}")

@@ -117,7 +117,12 @@ def main():
     legends = _merge(m for _n, m in leg_items)
     legends.translate(dz=caps_drop)
     knob = _merge(m for _n, m, _c in by_group["knob"])
-    knob.translate(-pl.KNOB_POS[0], -pl.KNOB_POS[1], -_min_z(knob))  # origin, upright
+    # print CROWN-DOWN (snap peg pointing up) so nothing overhangs: to local
+    # frame, flip 180° about X (proper rotation y,z -> -y,-z; winding kept),
+    # then drop the crown to the bed.
+    knob.translate(-pl.KNOB_POS[0], -pl.KNOB_POS[1], -pl.KNOB_Z0)
+    knob.V = [(x, -y, -z) for x, y, z in knob.V]
+    knob.translate(dz=-_min_z(knob))
 
     print("validating print meshes:")
     for fname, mesh in [("tray.stl", tray), ("plate.stl", plate),

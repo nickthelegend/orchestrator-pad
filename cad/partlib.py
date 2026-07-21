@@ -48,7 +48,8 @@ PLATE_Z0, PLATE_Z1 = 40.0, 41.5
 MX_CUT = 14.1
 KNOB_HOLE_D = 7.4
 CAP_Z0 = 47.0          # assembled: keycap bottom face height
-KNOB_Z0 = 42.5
+KNOB_Z0 = 41.5         # v7.1: mock knob rests ON the plate top (snap-fit peg,
+#                        no potentiometer) instead of floating over an EC11 nut
 
 # v4 fat-base component bay (SPEC.md "Tray"): dual-USB-C ESP32-S3 clone board
 # with factory pin headers (pins DOWN, components + USB-C on TOP), down-firing
