@@ -20,7 +20,7 @@ public:
   void poll() {
     if (!_server) return;
     if (_server->hasClient()) {
-      WiFiClient nc = _server->available();
+      WiFiClient nc = _server->accept();   // (was available(); renamed in core 3.x)
       if (_client && _client.connected()) {
         nc.println("busy — a client is already attached");
         nc.stop();

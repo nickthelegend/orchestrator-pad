@@ -90,13 +90,19 @@ wipe saved Wi-Fi and re-open the portal.
   core 3.x** — nothing to install, but you do need core 3.x (Boards Manager →
   "esp32" by Espressif, ≥ 3.0).
 
-**Board settings** (Tools menu) — the two starred ones matter:
+**Board settings** (Tools menu) — the three starred ones matter:
 
 - Board: **ESP32S3 Dev Module**
 - ⭐ **PSRAM: `OPI PSRAM`** — the record buffer is `ps_malloc`'d; without this it
   fails to allocate and the mic won't record.
 - ⭐ **USB CDC On Boot: `Enabled`** — so the Serial monitor works over USB-C.
-- Flash Size: `16MB`; a partition scheme with ≥ 3 MB app (default 16 MB is fine).
+- ⭐ **Partition Scheme: `Huge APP (3MB No OTA/1MB SPIFFS)`** — the TLS stack
+  pushes the build to ~90 % of the *default* 1.3 MB app partition (it fits, but
+  barely). Huge APP drops it to ~37 %. Flash Size: `16MB`.
+
+> Verified: this compiles clean against **esp32 core 3.3.10 + WiFiManager 2.0.17**
+> for `esp32s3` (OPI PSRAM, USB-CDC) — 1.18 MB flash, 48 KB RAM, no warnings in
+> the sketch.
 
 **Steps:**
 
