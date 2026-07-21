@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server.mjs",
     "test:voice": "node test-voice.mjs",
-    "test": "node --test test/unit.test.mjs test/integration.test.mjs test/loom.test.mjs",
+    "test": "node --test test/unit.test.mjs test/auth.test.mjs test/integration.test.mjs test/loom.test.mjs",
     "test:unit": "node --test test/unit.test.mjs"
   },
   "license": "MIT"

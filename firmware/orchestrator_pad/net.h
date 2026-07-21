@@ -1,14 +1,20 @@
 #pragma once
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include "config.h"
 #include "settings.h"
 #include "audio.h"
+#include "certs.h"
 
-// Talks to the backend (the tailnet server on the Mac). The backend does STT →
-// Loom/LLM → TTS and hands back raw 16 kHz PCM with a Content-Length, which we
-// stream straight to the amp as it downloads.
+// Talks to the backend — the Mac's LAN IP over plain HTTP, or a Tailscale Funnel
+// URL over HTTPS. The backend does STT → Loom/LLM → TTS and hands back raw 16 kHz
+// PCM with a Content-Length, which we stream straight to the amp as it downloads.
+//
+// Transport is chosen per request from the saved URL's scheme (settings.secure()):
+// https → WiFiClientSecure pinned to ISRG Root X1 (certs.h); http → WiFiClient.
+// When a pad token is set it rides on every request as a Bearer header.
 class Net {
 public:
   void begin(Settings *s) { _s = s; }
@@ -16,9 +22,10 @@ public:
 
   // GET /health — true if the backend answers. Fills `brain` ("loom"/"llm").
   bool health(String &brain) {
-    HTTPClient http; WiFiClient client;
-    if (!http.begin(client, url("/health"))) return false;
-    http.setTimeout(6000);
+    HTTPClient http; WiFiClient plain; WiFiClientSecure tls;
+    if (!beginReq(http, plain, tls, url("/health"))) return false;
+    auth(http);
+    http.setTimeout(10000);
     int code = http.GET();
     if (code != 200) { http.end(); return false; }
     String body = http.getString();
@@ -29,10 +36,11 @@ public:
 
   // POST /select {agent} — lock the agent in Loom.
   bool select(const String &agent) {
-    HTTPClient http; WiFiClient client;
-    if (!http.begin(client, url("/select"))) return false;
+    HTTPClient http; WiFiClient plain; WiFiClientSecure tls;
+    if (!beginReq(http, plain, tls, url("/select"))) return false;
+    auth(http);
     http.addHeader("Content-Type", "application/json");
-    http.setTimeout(10000);
+    http.setTimeout(12000);
     int code = http.POST(String("{\"agent\":\"") + agent + "\"}");
     http.end();
     return code == 200;
@@ -42,10 +50,11 @@ public:
   // Fills transcript/reply from response headers. Returns true on 200.
   bool talk(const int16_t *pcm, size_t samples, const String &agent,
             Audio &audio, String &transcript, String &reply) {
-    HTTPClient http; WiFiClient client;
+    HTTPClient http; WiFiClient plain; WiFiClientSecure tls;
     String u = url("/voice");
     if (agent.length()) u += "?agent=" + urlEnc(agent);
-    if (!http.begin(client, u)) return false;
+    if (!beginReq(http, plain, tls, u)) return false;
+    auth(http);
     http.addHeader("Content-Type", "application/octet-stream");
     const char *keys[] = {"X-Transcript", "X-Reply"};
     http.collectHeaders(keys, 2);
@@ -62,8 +71,9 @@ public:
 
   // GET /speak?text=… → play it (connected cue, telnet `say`).
   bool speak(const String &text, Audio &audio) {
-    HTTPClient http; WiFiClient client;
-    if (!http.begin(client, url("/speak") + "?text=" + urlEnc(text))) return false;
+    HTTPClient http; WiFiClient plain; WiFiClientSecure tls;
+    if (!beginReq(http, plain, tls, url("/speak") + "?text=" + urlEnc(text))) return false;
+    auth(http);
     http.setTimeout(30000);
     int code = http.GET();
     if (code != 200) { http.end(); return false; }
@@ -75,13 +85,35 @@ public:
 private:
   Settings *_s = nullptr;
 
+  // backendUrl + path, tolerating a trailing slash on the base.
   String url(const char *path) {
-    return String("http://") + _s->backendHost + ":" + _s->backendPort + path;
+    String b = _s->backendUrl;
+    while (b.endsWith("/")) b.remove(b.length() - 1);
+    return b + path;
+  }
+
+  // Point the HTTPClient at either a plain or a TLS client, by the URL's scheme.
+  // Both clients are stack-local in the caller so they outlive the request; the
+  // unused one is never connected, so it costs nothing.
+  bool beginReq(HTTPClient &http, WiFiClient &plain, WiFiClientSecure &tls, const String &fullUrl) {
+    http.setConnectTimeout(10000);
+    http.setReuse(false);
+    if (_s->secure()) {
+      tls.setCACert(ISRG_ROOT_X1);   // verify the Funnel cert — refuse a MITM
+      tls.setHandshakeTimeout(15);   // fail fast if the URL is wrong/unreachable
+      return http.begin(tls, fullUrl);
+    }
+    return http.begin(plain, fullUrl);
+  }
+
+  void auth(HTTPClient &http) {
+    if (_s->padToken[0]) http.addHeader("Authorization", String("Bearer ") + _s->padToken);
   }
 
   // Read the PCM body and push it to I2S. The backend sends a Content-Length, so
   // there are no chunk markers to trip over; we carry an odd byte across reads to
-  // keep 16-bit samples aligned.
+  // keep 16-bit samples aligned. Works the same over TLS (the stream is just the
+  // decrypted body).
   void streamToSpeaker(HTTPClient &http, Audio &audio) {
     WiFiClient *stream = http.getStreamPtr();
     int total = http.getSize();     // Content-Length, or -1 if unknown

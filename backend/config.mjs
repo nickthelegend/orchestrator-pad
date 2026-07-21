@@ -71,6 +71,13 @@ export const config = {
   // A per-request ceiling so a stuck upstream can't hang the pad forever.
   timeoutMs: Number(env("TIMEOUT_MS", "20000")),
 
+  // Shared secret the pad must present (Authorization: Bearer <token>, or the
+  // X-Pad-Token header). Empty = auth off — fine on a trusted LAN. REQUIRED once
+  // you expose the backend to the public internet (e.g. Tailscale Funnel):
+  // without it, anyone who finds the URL can spend your API keys and drive Loom.
+  // Generate one with:  openssl rand -hex 24
+  padToken: env("PAD_TOKEN", ""),
+
   // ── The brain ──────────────────────────────────────────────────────────
   // "loom": the pad drives the Loom daemon — an agent key locks that agent
   //         (a handoff, visible in the thread), and a held-to-talk turn is sent

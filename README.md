@@ -93,8 +93,9 @@ agent key to lock that agent, hold the mic key and speak, hear the agent answer.
   keys, `npm start`, done — see the [backend README](backend/README.md).
 
 **Bring it up:** `cd backend && cp .env.example .env` (add two keys) → `npm start`
-→ flash the firmware → join `LoomPad-Setup` and enter your Mac's IP → press an
-agent key, hold the mic, talk.
+→ flash the firmware → join `LoomPad-Setup` and enter your backend URL (a LAN
+`http://<mac-ip>:8080`, or a `https://…ts.net` Tailscale Funnel for anywhere) →
+press an agent key, hold the mic, talk.
 
 ## Print it
 

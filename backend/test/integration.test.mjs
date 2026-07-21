@@ -46,7 +46,9 @@ before(async () => {
   // trigger a real Loom agent run. The Loom bridge has its own test.
   child = spawn(process.execPath, ["server.mjs"], {
     cwd: path.join(here, ".."),
-    env: { ...process.env, PORT: String(PORT), HOST: "127.0.0.1", BRAIN: "llm" },
+    // PAD_TOKEN:"" forces auth off regardless of .env — these tests exercise the
+    // pipeline, not the gate (auth has its own test).
+    env: { ...process.env, PORT: String(PORT), HOST: "127.0.0.1", BRAIN: "llm", PAD_TOKEN: "" },
     stdio: "ignore",
   });
   // wait for /health

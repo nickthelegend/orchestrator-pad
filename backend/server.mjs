@@ -17,6 +17,7 @@
  */
 
 import http from "node:http";
+import crypto from "node:crypto";
 import { config, assertConfigured } from "./config.mjs";
 import { stt, llm, ttsStream, pcmToWav, isWav } from "./providers.mjs";
 import { loomInit, loomReachable, loomSelect, loomAsk, loomAgents } from "./loom.mjs";
@@ -69,6 +70,18 @@ async function speakPcm(res, text, extraHeaders = {}) {
   return pcm.length;
 }
 
+/** Constant-time check of the pad's shared secret. When PAD_TOKEN is unset the
+ *  backend is open (trusted-LAN mode); when set, every request must carry it as
+ *  `Authorization: Bearer <token>` or `X-Pad-Token`. */
+function tokenOk(req) {
+  if (!config.padToken) return true;
+  const auth = req.headers["authorization"] || "";
+  const provided = auth.startsWith("Bearer ") ? auth.slice(7) : req.headers["x-pad-token"] || "";
+  const a = Buffer.from(String(provided));
+  const b = Buffer.from(config.padToken);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 /** transcript → reply text, via Loom or the standalone LLM. */
 async function think(agent, transcript) {
   if (brainMode === "loom") {
@@ -83,6 +96,12 @@ async function think(agent, transcript) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const started = Date.now();
+
+  // Gate everything behind the shared secret when one is configured.
+  if (!tokenOk(req)) {
+    console.warn(`  ✗ 401 ${req.method} ${url.pathname} from ${req.socket.remoteAddress}`);
+    return void json(res, 401, { error: "unauthorized" });
+  }
 
   if (req.method === "GET" && url.pathname === "/health") {
     return void json(res, 200, {
@@ -210,5 +229,10 @@ server.listen(config.port, config.host, async () => {
     `  stt ${config.sttProvider}:${config.sttProvider === "groq" ? config.groq.sttModel : config.deepgram.sttModel} · llm ${config.groq.llmModel} · tts ${config.deepgram.ttsModel}`,
   );
   await chooseBrain();
-  console.log(`  point the pad's BACKEND_HOST at this machine's LAN/tailnet IP (port ${config.port})\n`);
+  console.log(
+    config.padToken
+      ? `  auth:  on (pad must send the PAD_TOKEN)`
+      : `  auth:  OFF — set PAD_TOKEN before exposing this to the internet`,
+  );
+  console.log(`  point the pad at this machine — LAN: http://<lan-ip>:${config.port}  ·  remote: Tailscale Funnel (see README)\n`);
 });

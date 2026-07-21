@@ -41,6 +41,20 @@ but Groq gates audio models per-project — once you've enabled them for your
 key's project, set `STT_PROVIDER=groq` and STT moves to Groq whisper. The LLM
 is always Groq; TTS is always Deepgram.
 
+### Pad auth (`PAD_TOKEN`)
+
+Set `PAD_TOKEN` to a shared secret and the backend refuses any request that
+doesn't present it (`Authorization: Bearer <token>`, checked in constant time).
+Leave it empty on a trusted LAN; **set it before exposing the backend to the
+internet** (Tailscale Funnel, below) — otherwise anyone who finds the URL can
+spend your API keys and drive Loom.
+
+```bash
+echo "PAD_TOKEN=$(openssl rand -hex 24)" >> .env
+```
+
+Enter the same value in the pad's setup portal ("Pad token").
+
 ## The brain: Loom vs. LLM
 
 - **`loom`** (default when the daemon is reachable): the pad drives Loom.
@@ -92,16 +106,46 @@ answer out loud — the whole pipeline without the hardware.
 
 ## Pointing the pad at it
 
-The pad asks for your Mac's address in its setup portal. Find it:
+The pad's setup portal asks for a **backend URL**. Two ways to reach the Mac —
+the scheme in the URL is what tells the firmware which transport to use.
+
+### Same Wi-Fi — a LAN URL (simplest)
 
 ```bash
-ipconfig getifaddr en0      # LAN (Wi-Fi)
-tailscale ip -4             # tailnet, if you use Tailscale
+ipconfig getifaddr en0      # your Mac's LAN IP, e.g. 192.168.1.20
 ```
 
-Enter that IP and port `8080` in the "LoomPad-Setup" portal (see
-[`../firmware`](../firmware)). The server binds `0.0.0.0` so anything on your
-LAN/tailnet can reach it.
+Enter `http://192.168.1.20:8080` in the portal. The server binds `0.0.0.0`, so
+anything on the same network reaches it. No token needed on a trusted LAN.
+
+> **Not the `tailscale ip` (`100.x`).** A bare ESP32 isn't a tailnet node, so it
+> can't route to a `100.x` address even on the same Wi-Fi. Use the LAN IP here,
+> or Funnel below for a public URL.
+
+### Anywhere — Tailscale Funnel (a public HTTPS URL)
+
+Funnel puts the backend behind a public `https://<machine>.<tailnet>.ts.net`
+URL that the pad reaches over TLS from *any* network. **Set `PAD_TOKEN` first** —
+Funnel is public-internet-facing.
+
+```bash
+# one-time: enable HTTPS + Funnel for this machine in the admin console
+#   https://login.tailscale.com/admin/dns        (enable MagicDNS + HTTPS)
+#   https://login.tailscale.com/admin/acls       (add the "funnel" nodeAttr)
+tailscale up                       # if not already logged in
+tailscale funnel 8080              # proxy public :443 → localhost:8080
+tailscale funnel status            # prints your https://<machine>.<tailnet>.ts.net URL
+```
+
+Put that `https://…ts.net` URL and your `PAD_TOKEN` in the portal. Traffic goes
+out through Tailscale's relay and back, so the same URL works at home and away —
+which is why it's the pick when the pad moves around. The firmware pins the
+Let's Encrypt root (ISRG Root X1) and verifies the cert, so the token can't be
+sniffed by a MITM.
+
+> Prefer not to expose it publicly? A Tailscale **subnet router** on the pad's
+> LAN keeps everything private, but needs an always-on Tailscale node there
+> (a Pi, another Mac) advertising the route — more moving parts than Funnel.
 
 ## Files
 
@@ -111,5 +155,5 @@ LAN/tailnet can reach it.
 | `providers.mjs` | `stt()`, `llm()`, `ttsStream()`, WAV framing |
 | `loom.mjs` | daemon bridge: bootstrap token, handoff, message, poll for reply |
 | `config.mjs` | all config from env, with a tiny dependency-free `.env` loader |
-| `test/` | unit · integration · loom |
+| `test/` | unit · auth · integration · loom |
 | `test-voice.mjs` | audible end-to-end harness |

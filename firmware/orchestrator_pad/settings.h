@@ -5,39 +5,41 @@
 
 // Runtime config, persisted in NVS (flash key/value). Written by the captive
 // portal, read on every boot. WiFi credentials themselves are stored by
-// WiFiManager separately; this holds where the backend lives.
+// WiFiManager separately; this holds where the backend lives and the secret
+// used to reach it.
+//
+//   backendUrl : full base URL — http://192.168.1.20:8080 on the LAN, or
+//                https://<machine>.<tailnet>.ts.net for a Tailscale Funnel.
+//                The scheme decides plain HTTP vs. TLS in net.h.
+//   padToken   : shared secret sent as `Authorization: Bearer …` (required by
+//                the backend once it's exposed to the internet). Blank = none.
 struct Settings {
-  char     backendHost[41] = DEFAULT_BACKEND_HOST;
-  uint16_t backendPort     = DEFAULT_BACKEND_PORT;
-  uint16_t telnetPort      = DEFAULT_TELNET_PORT;
+  char backendUrl[128] = DEFAULT_BACKEND_URL;
+  char padToken[96]    = "";
 
   void load() {
     Preferences p;
     p.begin("loompad", true); // read-only
-    String h = p.getString("host", DEFAULT_BACKEND_HOST);
-    strncpy(backendHost, h.c_str(), sizeof(backendHost) - 1);
-    backendHost[sizeof(backendHost) - 1] = 0;
-    backendPort = p.getUShort("port", DEFAULT_BACKEND_PORT);
-    telnetPort  = p.getUShort("telnet", DEFAULT_TELNET_PORT);
+    copyInto(backendUrl, sizeof(backendUrl), p.getString("url", DEFAULT_BACKEND_URL));
+    copyInto(padToken, sizeof(padToken), p.getString("token", ""));
     p.end();
   }
 
   void save() {
     Preferences p;
     p.begin("loompad", false);
-    p.putString("host", backendHost);
-    p.putUShort("port", backendPort);
-    p.putUShort("telnet", telnetPort);
+    p.putString("url", backendUrl);
+    p.putString("token", padToken);
     p.end();
   }
 
-  void set(const char *host, uint16_t port, uint16_t telnet) {
-    strncpy(backendHost, host, sizeof(backendHost) - 1);
-    backendHost[sizeof(backendHost) - 1] = 0;
-    if (port) backendPort = port;
-    if (telnet) telnetPort = telnet;
+  void set(const char *url, const char *token) {
+    if (url && *url) copyInto(backendUrl, sizeof(backendUrl), url);
+    copyInto(padToken, sizeof(padToken), token ? token : "");
     save();
   }
+
+  bool secure() const { return strncmp(backendUrl, "https://", 8) == 0; }
 
   // Wipe everything (used by the reset-provisioning gesture).
   static void erase() {
@@ -45,5 +47,11 @@ struct Settings {
     p.begin("loompad", false);
     p.clear();
     p.end();
+  }
+
+private:
+  static void copyInto(char *dst, size_t cap, const String &src) {
+    strncpy(dst, src.c_str(), cap - 1);
+    dst[cap - 1] = 0;
   }
 };

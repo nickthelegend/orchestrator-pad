@@ -18,18 +18,17 @@ public:
   // Returns true once WiFi is connected. `portalColour` (optional) is a callback
   // the caller uses to light the status LED while the portal is open.
   bool run(Settings &s) {
-    char portStr[8], telnetStr[8];
-    snprintf(portStr, sizeof(portStr), "%u", s.backendPort);
-    snprintf(telnetStr, sizeof(telnetStr), "%u", s.telnetPort);
-
-    WiFiManagerParameter pHost("host", "Loom backend IP (your Mac)", s.backendHost, 40);
-    WiFiManagerParameter pPort("port", "Backend port", portStr, 6);
-    WiFiManagerParameter pTelnet("telnet", "Telnet port (for debug)", telnetStr, 6);
+    // Two fields: where the backend lives, and the secret to reach it. The URL's
+    // scheme picks the transport — http://<mac-ip>:8080 on the LAN, or a
+    // https://<machine>.<tailnet>.ts.net Tailscale Funnel from anywhere.
+    WiFiManagerParameter pUrl(
+      "url", "Loom backend URL (http://IP:8080 or https://mac.ts.net)", s.backendUrl, 120);
+    WiFiManagerParameter pToken(
+      "token", "Pad token (blank if the backend has none)", s.padToken, 90);
 
     _wm.setTitle("Loom Pad");
-    _wm.addParameter(&pHost);
-    _wm.addParameter(&pPort);
-    _wm.addParameter(&pTelnet);
+    _wm.addParameter(&pUrl);
+    _wm.addParameter(&pToken);
     _wm.setConfigPortalBlocking(true);
     _wm.setConfigPortalTimeout(0);          // stay open until configured
     _wm.setBreakAfterConfig(true);
@@ -39,11 +38,7 @@ public:
                 : _wm.autoConnect(PORTAL_AP_NAME);
 
     // Persist whatever the portal collected (harmless if nothing changed).
-    uint16_t port = (uint16_t)atoi(pPort.getValue());
-    uint16_t telnet = (uint16_t)atoi(pTelnet.getValue());
-    s.set(pHost.getValue(),
-          port ? port : s.backendPort,
-          telnet ? telnet : s.telnetPort);
+    s.set(pUrl.getValue(), pToken.getValue());
 
     return ok && WiFi.status() == WL_CONNECTED;
   }

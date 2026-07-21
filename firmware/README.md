@@ -12,9 +12,8 @@ Sketch: [`orchestrator_pad/orchestrator_pad.ino`](orchestrator_pad/orchestrator_
 
 1. **Provision** — first boot (or hold **K1** at power-on) raises a Wi-Fi
    access point, **`LoomPad-Setup`**. Join it from a phone/laptop; a captive
-   page lists nearby networks and asks for the **backend IP** (your Mac), the
-   backend port, and a telnet port. Save → the pad joins your Wi-Fi and stores
-   everything in NVS.
+   page lists nearby networks and asks for the **backend URL** and a **pad
+   token**. Save → the pad joins your Wi-Fi and stores everything in NVS.
 2. **Connect** — it starts a telnet debug server, checks the backend's
    `/health`, and asks the backend to **speak "connected"** through the amp.
 3. **Run** — an agent key locks that agent in Loom (a handoff, visible in the
@@ -105,10 +104,29 @@ wipe saved Wi-Fi and re-open the portal.
 2. Install WiFiManager, set the board options above, pick the port, **Upload**.
 3. First boot: join the **`LoomPad-Setup`** Wi-Fi from your phone. If the portal
    doesn't pop up, browse to `http://192.168.4.1`.
-4. Pick your Wi-Fi, enter your **Mac's IP** (`ipconfig getifaddr en0` or
-   `tailscale ip -4`) and port **8080**, save.
+4. Pick your Wi-Fi, enter the **backend URL** and **pad token** (below), save.
 5. It joins, says "connected," and you're ready: **press an agent key, then hold
    K1 to talk.**
+
+### Backend URL & token
+
+One field decides where — and how — the pad reaches the backend; the **scheme
+picks the transport**:
+
+| You're… | Enter | Token |
+|---|---|---|
+| on the same Wi-Fi as the Mac | `http://<mac-lan-ip>:8080` (e.g. `http://192.168.1.20:8080`) | blank is fine on a trusted LAN |
+| anywhere / the pad moves around | `https://<machine>.<tailnet>.ts.net` (Tailscale Funnel) | **required** — Funnel is public |
+
+- **`http://…`** → plain connection. Use the Mac's **LAN IP**, *not* its
+  `tailscale ip` (`100.x`) — a bare ESP32 can't route to a tailnet address.
+- **`https://…ts.net`** → TLS, with the Let's Encrypt root pinned (the pad
+  verifies the cert, so the token can't be MITM'd). Set the same `PAD_TOKEN` on
+  the backend. See the [backend README](../backend/README.md#pointing-the-pad-at-it)
+  for the one-time `tailscale funnel 8080` setup.
+
+Change either later without reflashing: `reset-wifi` over telnet (or hold **K1**
+at power-on) re-opens the portal.
 
 ## Telnet debug
 
@@ -138,7 +156,8 @@ telnet <pad-ip> 23
 |---|---|
 | No serial output | Set **USB CDC On Boot: Enabled**, re-upload |
 | "PSRAM alloc failed" in the log | Set **PSRAM: OPI PSRAM** |
-| "backend not reachable" | Backend running? Right IP? Same network? Change it with `reset-wifi` |
+| "backend not reachable" | Backend running? Right URL? On `http://`, use the Mac's **LAN IP** not `100.x`. Fix with `reset-wifi` |
+| Works on LAN, fails on the `ts.net` URL | Is `tailscale funnel` running? Does `PAD_TOKEN` match on both sides? (a 401 means the token's wrong/blank) |
 | Portal never opens | Forget/rejoin `LoomPad-Setup`, or browse to `192.168.4.1` |
 | Amp silent | Check `DIN/BCLK/LRC` wiring and that the amp's **SD pin is tied to 3V3** |
 | Mic captures nothing | Check `SCK/WS/SD`, and tie the INMP441 **L/R pin to GND** |

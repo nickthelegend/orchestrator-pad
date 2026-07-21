@@ -75,7 +75,7 @@ void stopAndSend() {
     telnet.logf("  heard: %s\n  said:  %s\n", heard.c_str(), said.c_str());
     ledReady();
   } else {
-    telnet.logf("  ✗ voice request failed (backend at %s:%u?)\n", settings.backendHost, settings.backendPort);
+    telnet.logf("  ✗ voice request failed (backend at %s?)\n", settings.backendUrl);
     audio.beep(300, 220);
     led(80, 0, 0);
   }
@@ -111,8 +111,10 @@ void onTelnetCommand(const String &line) {
     telnet.logf("wifi %s  ip %s  rssi %ddBm  heap %u  psram %u\n",
                 WiFi.isConnected() ? "up" : "down", WiFi.localIP().toString().c_str(),
                 WiFi.RSSI(), ESP.getFreeHeap(), ESP.getFreePsram());
-    telnet.logf("backend http://%s:%u  · selected: %s\n",
-                settings.backendHost, settings.backendPort, selAgent.length() ? selAgent.c_str() : "(none)");
+    telnet.logf("backend %s  (%s, token %s)  · selected: %s\n",
+                settings.backendUrl, settings.secure() ? "https" : "http",
+                settings.padToken[0] ? "set" : "none",
+                selAgent.length() ? selAgent.c_str() : "(none)");
   } else if (cmd == "ip") {
     telnet.println(WiFi.localIP().toString());
   } else if (cmd == "heap") {
@@ -183,10 +185,10 @@ void setup() {
   }
 
   Serial.printf("WiFi up: %s\n", WiFi.localIP().toString().c_str());
-  telnet.begin(settings.telnetPort);
+  telnet.begin(TELNET_PORT);
   telnet.onCommand(onTelnetCommand);
-  Serial.printf("telnet:  telnet %s %u\n", WiFi.localIP().toString().c_str(), settings.telnetPort);
-  Serial.printf("backend: http://%s:%u\n", settings.backendHost, settings.backendPort);
+  Serial.printf("telnet:  telnet %s %u\n", WiFi.localIP().toString().c_str(), TELNET_PORT);
+  Serial.printf("backend: %s  (token %s)\n", settings.backendUrl, settings.padToken[0] ? "set" : "none");
 
   // Announce we're up — through the amp, from the backend's TTS.
   led(0, 40, 0);                        // green = ready

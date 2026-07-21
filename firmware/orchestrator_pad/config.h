@@ -31,10 +31,14 @@ static const uint8_t COL_PINS[MATRIX_COLS] = {14,  8, 17, 18};
 #define TALK_ROW 0
 #define TALK_COL 0                  // K1
 
-// ---- Defaults offered in the captive portal (editable there, saved to NVS) ----
-#define DEFAULT_BACKEND_HOST "192.168.1.100"   // your Mac's LAN/tailnet IP
-#define DEFAULT_BACKEND_PORT 8080
-#define DEFAULT_TELNET_PORT  23
+// ---- Backend URL default (editable in the captive portal, saved to NVS) ----
+// LAN:    http://<your-mac-ip>:8080
+// Remote: https://<machine>.<tailnet>.ts.net   (Tailscale Funnel — needs a token)
+#define DEFAULT_BACKEND_URL "http://192.168.1.100:8080"
+
+// ---- Telnet debug console: fixed port (not in the portal — it's not the
+//      backend, just a log/command line you reach with `telnet <pad-ip>`). ----
+#define TELNET_PORT 23
 
 // ---- Captive-portal access point shown during provisioning ----
 #define PORTAL_AP_NAME "LoomPad-Setup"
