@@ -1,5 +1,9 @@
 <div align="center">
 
+<img src="docs/images/reveal.gif" alt="Orchestrator Pad — assembled, exploding into its layers, and back together" width="620">
+
+<sub>tray · switch deck · plate · keycaps · knob — [watch the 15s MP4](docs/orchestrator-pad-reveal.mp4)</sub>
+
 <img src="docs/images/hero.png" alt="Orchestrator Pad — 3D-printed macropad with agent keys, voice bar and effort dial" width="760">
 
 # Orchestrator Pad
