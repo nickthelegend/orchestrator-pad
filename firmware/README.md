@@ -24,6 +24,14 @@ Sketch: [`orchestrator_pad/orchestrator_pad.ino`](orchestrator_pad/orchestrator_
 
 ESP32-S3-DevKitC-1 (N16R8 — 16 MB flash / 8 MB PSRAM). No pot, no diodes.
 
+<div align="center">
+<img src="../docs/images/circuit.png" alt="Orchestrator Pad wiring diagram — 4×4 key matrix, INMP441 mic, MAX98357A amp + speaker, on an ESP32-S3-WROOM-1" width="920">
+</div>
+
+The full wiring at a glance: the 4×4 matrix (rows `G10–G13`, columns
+`G14/G8/G17/G18`), the INMP441 mic and MAX98357A amp on I2S, and the (optional)
+pot. The tables below are the same thing, cell by cell — all grounds are common.
+
 **Mic — INMP441 (I2S RX):** `VDD→3V3`, `GND→GND`, `L/R→GND`
 
 | INMP441 | SCK | WS | SD |

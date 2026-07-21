@@ -88,6 +88,12 @@ agent key to lock that agent, hold the mic key and speak, hear the agent answer.
               amp     ◀─ 16 kHz PCM reply   ◀─                             (visible in the thread)
 ```
 
+**Wiring** — the 4×4 matrix, INMP441 mic, and MAX98357A amp + speaker on an ESP32-S3 (full pin-by-pin tables in the [firmware README](firmware/README.md#hardware--wiring)):
+
+<div align="center">
+<img src="docs/images/circuit.png" alt="Orchestrator Pad wiring diagram — 4×4 key matrix, INMP441 mic, MAX98357A amp and speaker, on an ESP32-S3-WROOM-1" width="880">
+</div>
+
 - **[`firmware/`](firmware)** — ESP32-S3 sketch: captive-portal Wi-Fi setup
   (`LoomPad-Setup`), agent-select keys, hold-to-talk mic streaming, and a telnet
   debug console. Wiring, key map, and flashing steps in the
